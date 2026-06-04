@@ -1,0 +1,6 @@
+{
+  "name": "DLNZ",
+  "description": "Global Luxury featuring architectural minimalism and brutalist streetwear. A synthesis of high-fashion editorial aesthetics and technical functionality.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
