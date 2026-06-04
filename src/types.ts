@@ -27,3 +27,10 @@ export interface Order {
   userId?: string;
   createdAt?: any;
 }
+
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  selectedSize: string;
+}
+

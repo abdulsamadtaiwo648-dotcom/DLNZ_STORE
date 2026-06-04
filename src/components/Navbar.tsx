@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingBag, X, User as UserIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
 import { Logo } from './Logo';
 import { useAuth } from './FirebaseProvider';
+import { useCart } from './CartProvider';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, login, logout, isAdmin: isUserAdmin } = useAuth();
+  const { totalItems, setIsCartOpen } = useCart();
+
 
   const navLinks = [
     { label: 'New Arrivals', href: '/' },
@@ -54,9 +60,62 @@ export const Navbar = () => {
         <Logo size="sm" />
       </Link>
 
-      <div className="flex items-center gap-4">
-        <Search className="w-5 h-5 text-primary cursor-pointer active:scale-95 transition-transform" />
-        <ShoppingBag className="w-5 h-5 text-primary cursor-pointer active:scale-95 transition-transform" />
+      <div className="flex items-center gap-4 relative">
+        {/* Search Input Bar */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.form 
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 180, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) {
+                  navigate(`/collections?search=${encodeURIComponent(searchQuery.trim())}`);
+                  setIsSearchOpen(false);
+                }
+              }}
+              className="absolute right-16 top-1/2 -translate-y-1/2 overflow-hidden flex items-center bg-brand-charcoal border border-outline-variant/30 px-3 py-1.5"
+            >
+              <input 
+                type="text" 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="SEARCH ENGINE..."
+                className="bg-transparent border-none text-[10px] uppercase font-technical-sm text-primary placeholder:opacity-25 focus:ring-0 outline-none w-full"
+                autoFocus
+              />
+              <button type="submit" className="text-primary hover:text-brand-red opacity-60">
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
+
+        <button 
+          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          className="text-primary hover:scale-105 active:scale-95 transition-transform p-1.5 focus:outline-none"
+          title="Search Inventory"
+        >
+          <Search className="w-5 h-5 cursor-pointer" />
+        </button>
+
+        <button 
+          onClick={() => setIsCartOpen(true)}
+          className="text-primary hover:scale-105 active:scale-95 transition-transform p-1.5 h-9 w-9 flex items-center justify-center relative focus:outline-none"
+          title="View Shopping Cart"
+        >
+          <ShoppingBag className="w-5 h-5 cursor-pointer" />
+          {totalItems > 0 && (
+            <motion.span 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="absolute -top-1 -right-1 bg-brand-red text-white font-technical text-[8px] font-bold h-4 w-4 rounded-full flex items-center justify-center border border-background shadow-lg"
+            >
+              {totalItems}
+            </motion.span>
+          )}
+        </button>
       </div>
 
       <AnimatePresence>

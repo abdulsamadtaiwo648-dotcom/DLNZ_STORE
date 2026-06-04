@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { Product } from '../types';
 import { cn } from '../lib/utils';
-import { ShoppingBag, MessageSquare } from 'lucide-react';
+import { ShoppingBag, MessageSquare, X } from 'lucide-react';
 import { useAuth } from '../components/FirebaseProvider';
+import { useCart } from '../components/CartProvider';
 import { WHATSAPP_LINK } from '../constants';
+
 
 export const Collections = () => {
   const { user } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { addToCart } = useCart();
+
+  const searchQuery = searchParams.get('search') || '';
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -32,25 +38,25 @@ export const Collections = () => {
   }
 
   const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
-  const sizes = ['XS', 'S', 'M', 'L', 'XL'];
+  const sizes = ['S', 'M', 'L', 'XL'];
 
-  const handleQuickBuy = (product: any, size: string) => {
-    const message = `Hello DLNZ, I would like to order:
-    
-Product: ${product.name}
-SKU: ${product.sku}
-Price: ₦${product.price.toLocaleString()}
-Size: ${size}
-User: ${user?.email || 'Guest'}
-
-Please confirm availability and payment details.`;
-
-    window.open(WHATSAPP_LINK(message), '_blank');
-  };
-
-  const filteredProducts = filter === 'All' 
+  let filteredProducts = filter === 'All' 
     ? products 
     : products.filter(p => p.category === filter);
+
+  if (searchQuery.trim()) {
+    const queryTerm = searchQuery.toLowerCase().trim();
+    filteredProducts = filteredProducts.filter(p => 
+      p.name.toLowerCase().includes(queryTerm) ||
+      p.description.toLowerCase().includes(queryTerm) ||
+      p.sku.toLowerCase().includes(queryTerm) ||
+      p.category.toLowerCase().includes(queryTerm)
+    );
+  }
+
+  const handleClearSearch = () => {
+    setSearchParams({});
+  };
 
   return (
     <div className="pt-32 pb-32 max-w-7xl mx-auto px-6 md:px-16 min-h-screen">
@@ -59,6 +65,20 @@ Please confirm availability and payment details.`;
           <div>
             <span className="font-technical-sm text-label-xs text-brand-red mb-2 block tracking-widest">Available Now</span>
             <h1 className="font-display text-4xl md:text-7xl uppercase leading-none">Collections</h1>
+            {searchQuery && (
+              <div className="mt-4 flex items-center gap-3 bg-brand-charcoal border border-outline-variant/30 px-3 py-1.5 inline-flex">
+                <span className="font-technical-sm text-[9px] uppercase tracking-wider opacity-60">
+                  Search: <span className="text-brand-red font-bold">&quot;{searchQuery}&quot;</span>
+                </span>
+                <button 
+                  onClick={handleClearSearch}
+                  className="text-primary hover:text-brand-red p-0.5 cursor-pointer"
+                  title="Clear Search"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
           </div>
           <div className="font-technical-sm text-label-xs opacity-40 pb-2">
             Showing {filteredProducts.length} of {products.length} Items
@@ -110,24 +130,24 @@ Please confirm availability and payment details.`;
                     
                     {/* Hover State: Quick Add */}
                     <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-8 text-center backdrop-blur-[2px]">
-                      <span className="font-technical-sm text-label-xs text-white mb-6 tracking-[0.3em]">QUICK BUY</span>
+                      <span className="font-technical-sm text-label-xs text-white mb-6 tracking-[0.3em]">QUICK ADD</span>
                       <div className="flex gap-2 flex-wrap justify-center mb-8">
                         {sizes.map(s => (
                           <button 
                             key={s} 
-                            onClick={(e) => { e.preventDefault(); handleQuickBuy(product, s); }}
-                            className="px-3 py-1 border border-white/50 text-white font-technical-sm text-[8px] hover:bg-white hover:text-black transition-colors"
+                            onClick={(e) => { e.preventDefault(); addToCart(product, s); }}
+                            className="px-3 py-1 border border-white/50 text-white font-technical-sm text-[8px] hover:bg-white hover:text-black transition-colors cursor-pointer"
                           >
                             {s}
                           </button>
                         ))}
                       </div>
                       <button 
-                        onClick={(e) => { e.preventDefault(); handleQuickBuy(product, 'M'); }}
-                        className="w-full py-4 bg-brand-red text-white font-technical-sm text-label-xs uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2"
+                        onClick={(e) => { e.preventDefault(); addToCart(product, 'M'); }}
+                        className="w-full py-4 bg-brand-red text-white font-technical-sm text-label-xs uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                         <MessageSquare className="w-4 h-4" />
-                         Order via WhatsApp
+                         <ShoppingBag className="w-4 h-4" />
+                         Add Size M to Cart
                       </button>
                     </div>
 

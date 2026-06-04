@@ -15,6 +15,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AnimatePresence } from 'motion/react';
 
 import { FirebaseProvider } from './components/FirebaseProvider';
+import { CartProvider } from './components/CartProvider';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -28,19 +29,21 @@ export default function App() {
   return (
     <Router>
       <FirebaseProvider>
-        <ScrollToTop />
-        <Layout>
-          <AnimatePresence mode="wait">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/collections" element={<Collections />} />
-              <Route path="/product/:id" element={<ProductDetail />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/tracking" element={<Tracking />} />
-              <Route path="/admin/*" element={<AdminDashboard />} />
-            </Routes>
-          </AnimatePresence>
-        </Layout>
+        <CartProvider>
+          <ScrollToTop />
+          <Layout>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/collections" element={<Collections />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/tracking" element={<Tracking />} />
+                <Route path="/admin/*" element={<AdminDashboard />} />
+              </Routes>
+            </AnimatePresence>
+          </Layout>
+        </CartProvider>
       </FirebaseProvider>
     </Router>
   );

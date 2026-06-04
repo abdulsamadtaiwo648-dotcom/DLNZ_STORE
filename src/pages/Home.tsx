@@ -76,32 +76,41 @@ export const Home = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           {/* Main Featured */}
-          <div className="md:col-span-8 group relative overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px] border border-outline-variant/30">
+          <Link 
+            to={featured[0]?.id ? `/product/${featured[0].id}` : '/collections'}
+            className="md:col-span-8 group relative overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px] border border-outline-variant/30 block cursor-pointer"
+          >
             <img alt="Drop 1" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={featured[0]?.image} />
             <div className="absolute bottom-10 left-10 z-20">
               <p className="font-technical-sm text-[10px] bg-black/80 text-white px-3 py-1 mb-3 inline-block">SS24-JK01</p>
-              <h3 className="font-display text-3xl md:text-4xl text-white uppercase">{featured[0]?.name}</h3>
+              <h3 className="font-display text-3xl md:text-4xl text-white uppercase group-hover:text-brand-red transition-colors">{featured[0]?.name}</h3>
               <p className="font-technical-sm text-label-xs text-white mt-1">₦{featured[0]?.price?.toLocaleString() || ''}</p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-          </div>
+          </Link>
 
           {/* Secondary Drops */}
           <div className="md:col-span-4 flex flex-col gap-6">
-            <div className="group relative overflow-hidden aspect-square border border-outline-variant/30">
+            <Link 
+              to={featured[1]?.id ? `/product/${featured[1].id}` : '/collections'}
+              className="group relative overflow-hidden aspect-square border border-outline-variant/30 block cursor-pointer"
+            >
               <img alt="Drop 2" className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" src={featured[1]?.image} />
               <div className="absolute bottom-6 left-6 z-20">
-                <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold">{featured[1]?.name}</h3>
+                <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[1]?.name}</h3>
                 <p className="font-technical-sm text-[10px] text-white/70">₦{featured[1]?.price?.toLocaleString() || ''}</p>
               </div>
-            </div>
-            <div className="group relative overflow-hidden aspect-square border border-outline-variant/30">
+            </Link>
+            <Link 
+              to={featured[2]?.id ? `/product/${featured[2].id}` : '/collections'}
+              className="group relative overflow-hidden aspect-square border border-outline-variant/30 block cursor-pointer"
+            >
               <img alt="Drop 3" className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" src={featured[2]?.image} />
               <div className="absolute bottom-6 left-6 z-20">
-                <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold">{featured[2]?.name}</h3>
+                <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[2]?.name}</h3>
                 <p className="font-technical-sm text-[10px] text-white/70">₦{featured[2]?.price?.toLocaleString() || ''}</p>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>

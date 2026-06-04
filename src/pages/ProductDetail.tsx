@@ -4,13 +4,16 @@ import { motion } from 'motion/react';
 import { productService } from '../services/productService';
 import { Product } from '../types';
 import { cn } from '../lib/utils';
-import { MessageSquare, Heart, ChevronDown, Plus } from 'lucide-react';
+import { MessageSquare, Heart, ChevronDown, Plus, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../components/FirebaseProvider';
+import { useCart } from '../components/CartProvider';
 import { WHATSAPP_LINK } from '../constants';
 
 export const ProductDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
+  const { addToCart } = useCart();
+
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -154,15 +157,18 @@ Please confirm availability and payment details.`;
           {/* Actions */}
           <div className="space-y-4 pt-10 border-t border-outline-variant/10">
             <button 
+              onClick={() => addToCart(product, selectedSize)}
+              className="w-full bg-white text-black font-technical-sm text-xs py-6 flex items-center justify-center gap-4 active:scale-95 transition-all hover:bg-neutral-200 tracking-[0.2em] font-bold cursor-pointer"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              ADD TO RECIPIENT CART
+            </button>
+            <button 
               onClick={handleWhatsAppCheckout}
-              className="w-full bg-brand-red text-white font-technical-sm text-xs py-6 flex items-center justify-center gap-4 active:scale-95 transition-all hover:brightness-110 tracking-[0.2em] font-bold"
+              className="w-full bg-brand-red text-white font-technical-sm text-xs py-6 flex items-center justify-center gap-4 active:scale-95 transition-all hover:brightness-110 tracking-[0.2em] font-bold cursor-pointer"
             >
               <MessageSquare className="w-4 h-4" />
-              CHECKOUT VIA WHATSAPP
-            </button>
-            <button className="w-full border border-brand-silver text-on-surface font-technical-sm text-xs py-6 flex items-center justify-center gap-4 hover:bg-on-surface hover:text-black transition-all tracking-[0.2em]">
-               <Heart className="w-4 h-4" />
-               ADD TO WISHLIST
+              BUY INSTANT ON WHATSAPP
             </button>
           </div>
 
