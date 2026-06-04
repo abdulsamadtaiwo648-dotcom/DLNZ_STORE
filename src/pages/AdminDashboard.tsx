@@ -234,13 +234,30 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
 );
 
 export const AdminDashboard = () => {
-  const { isAdmin: isAuthorized, loading: authLoading, login } = useAuth();
+  const { 
+    isAdmin: isAuthorized, 
+    loading: authLoading, 
+    login, 
+    loginWithEmail, 
+    registerWithEmail, 
+    authError, 
+    setAuthError 
+  } = useAuth();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Email login states
+  const [emailInput, setEmailInput] = useState('');
+  const [passwordInput, setPasswordInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -281,6 +298,35 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput || !passwordInput) {
+      setLocalError('Please fill in all requested fields.');
+      return;
+    }
+    setLocalError(null);
+    setAuthError(null);
+    setActionLoading(true);
+
+    try {
+      if (isRegistering) {
+        if (!nameInput) {
+          setLocalError('Please specify a profile display name.');
+          setActionLoading(false);
+          return;
+        }
+        await registerWithEmail(emailInput, passwordInput, nameInput);
+      } else {
+        await loginWithEmail(emailInput, passwordInput);
+      }
+    } catch (err: any) {
+      console.error('Auth action failed:', err);
+      setLocalError(err?.message || 'Authentication failed. Please check credentials or Firebase setup.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const stats = [
     { name: '01', value: 30 },
     { name: '02', value: 45 },
@@ -292,7 +338,7 @@ export const AdminDashboard = () => {
     { name: '08', value: 55 },
   ];
 
-  if (authLoading || loading) {
+  if (authLoading || (isAuthorized && loading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-12 h-12 border-2 border-brand-red border-t-transparent rounded-full animate-spin" />
@@ -306,7 +352,7 @@ export const AdminDashboard = () => {
         {/* Ambient absolute graphics in background */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,0,0,0.08)_0%,transparent_70%)] pointer-events-none" />
         
-        <div className="w-full max-w-2xl border border-outline-variant/20 bg-neutral-950 p-8 sm:p-12 shadow-2xl relative z-10">
+        <div className="w-full max-w-4xl border border-outline-variant/20 bg-neutral-950 p-8 sm:p-12 shadow-2xl relative z-10">
           
           {/* Header */}
           <div className="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">
@@ -314,28 +360,41 @@ export const AdminDashboard = () => {
               <Lock className="w-6 h-6 text-brand-red animate-pulse" />
             </div>
             <div>
-              <span className="font-technical-sm text-[9px] text-brand-red block tracking-widest uppercase">DLNZ ADMINISTRATION MODULE</span>
+              <span className="font-technical-sm text-[9px] text-brand-red block tracking-widest uppercase font-mono">DLNZ ADMINISTRATION SECTOR</span>
               <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-tight">Security Gateway</h1>
             </div>
           </div>
 
           <div className="space-y-8">
-            <p className="font-body text-xs text-[#b8b8b8] leading-relaxed">
-              Clearance required to access sector catalogs, active inventory, and master order streams. Please select a secure authentication channel to proceed.
+            <p className="font-body text-xs text-[#b8b8b8] leading-relaxed max-w-2xl">
+              Strictly restricted interface. Sign in using your Google account or authorized administrator credentials to access live sector inventories and master order logs of DLNZ.
             </p>
 
+            {/* Error Indicators */}
+            {(authError || localError) && (
+              <div className="p-4 bg-brand-red/10 border border-brand-red/40 text-xs text-brand-red font-mono flex flex-col gap-1 rounded-sm">
+                <span className="font-bold uppercase tracking-wider text-[10px]">⚠️ GATEWAY EXCEPTION:</span>
+                <p>{localError || authError}</p>
+                {authError?.includes('disabled') && (
+                  <p className="text-[#a0a0a0] leading-normal text-[10px] mt-2 font-sans normal-case">
+                    📢 Note: Go into your Firebase Authentication Console, locate the "Sign-in method" tab, and make sure to enable the "Email/Password" and "Google" providers.
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* SEGMENTED GATEWAYS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
               
-              {/* Option 1: Live Auth */}
-              <div className="border border-outline-variant/30 bg-surface-container-lowest p-6 flex flex-col justify-between hover:border-brand-red transition-all duration-300">
+              {/* Option 1: Live Google Auth */}
+              <div className="border border-outline-variant/20 bg-neutral-950 p-6 sm:p-8 flex flex-col justify-between hover:border-brand-red/60 transition-all duration-300">
                 <div>
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-4">
                     <KeyRound className="w-4 h-4 text-brand-red" />
-                    <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/90">Standard Channel</span>
+                    <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/90 font-mono">Identity Provider</span>
                   </div>
-                  <h3 className="font-display text-sm uppercase mb-2">Live Google Auth</h3>
-                  <p className="text-[11px] text-[#8e8e8e] leading-normal mb-6">
+                  <h3 className="font-display text-base uppercase mb-2">Live Google Authentication</h3>
+                  <p className="text-[11px] text-[#8e8e8e] leading-relaxed mb-8">
                     Connect through your primary Google Account registered on the Firestore project database.
                   </p>
                 </div>
@@ -349,44 +408,86 @@ export const AdminDashboard = () => {
                     <ArrowRight className="w-3 h-3" />
                   </button>
                   <p className="text-[9px] text-[#6b6b6b] leading-tight font-sans text-center">
-                    📢 <span className="text-brand-red">Notice:</span> If using the embedded preview, click <span className="font-bold underline">"Open in New Tab"</span> at the top right to prevent browser popup block errors.
+                    📢 <span className="text-brand-red font-semibold">Notice:</span> standard cookie popups are blocked inside sandboxed widgets. For Google login to load, click <span className="font-bold underline">"Open in New Tab"</span> at the top right of AI Studio.
                   </p>
                 </div>
               </div>
 
-              {/* Option 2: Dev Overrides */}
-              <div className="border border-outline-variant/30 bg-surface-container p-6 flex flex-col justify-between hover:border-white/30 transition-all duration-300">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Database className="w-4 h-4 text-white/50" />
-                    <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/60">Developer Tools</span>
+              {/* Option 2: Live Email/Password Credentials (NATIVE/IFRAME FRIENDLY) */}
+              <div className="border border-outline-variant/20 bg-neutral-900/60 p-6 sm:p-8 flex flex-col justify-between hover:border-white/20 transition-all duration-300">
+                <form onSubmit={handleEmailAuth} className="space-y-4 w-full">
+                  <div className="flex justify-between items-center mb-1">
+                    <div className="flex items-center gap-2">
+                      <Database className="w-4 h-4 text-brand-red" />
+                      <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/90 font-mono">Credentials Secure</span>
+                    </div>
                   </div>
-                  <h3 className="font-display text-sm uppercase mb-2">Sandbox Override</h3>
-                  <p className="text-[11px] text-[#8e8e8e] leading-normal mb-6">
-                    Bypass cross-origin browser sandbox constraints with direct simulated authorization keys.
-                  </p>
-                </div>
 
-                <div className="space-y-2">
-                  <button 
-                    onClick={() => {
-                      localStorage.setItem('dlnz-dev-auth-bypass', 'true');
-                      window.location.reload();
-                    }}
-                    className="w-full border border-white/20 text-white py-3 px-4 font-technical-sm text-[10px] uppercase tracking-widest hover:bg-white hover:text-black hover:border-white transition-all cursor-pointer font-bold"
-                  >
-                    Access as Admin
-                  </button>
-                  <button 
-                    onClick={() => {
-                      localStorage.setItem('dlnz-dev-auth-bypass', 'customer');
-                      window.location.reload();
-                    }}
-                    className="w-full text-center text-[9px] text-[#8e8e8e] uppercase hover:text-brand-red py-1 tracking-wider cursor-pointer"
-                  >
-                    Access as Mock Customer
-                  </button>
-                </div>
+                  <h3 className="font-display text-base uppercase">
+                    {isRegistering ? 'Create Security Account' : 'Credentials Authorization'}
+                  </h3>
+
+                  <div className="space-y-3">
+                    {isRegistering && (
+                      <div>
+                        <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-1 font-mono">Clearance Name</label>
+                        <input 
+                          type="text" 
+                          value={nameInput}
+                          onChange={(e) => setNameInput(e.target.value)}
+                          placeholder="e.g. Abdulsamad Admin"
+                          className="w-full bg-black/60 border border-white/10 p-2.5 text-xs focus:border-brand-red focus:outline-none transition-colors text-white font-sans"
+                        />
+                      </div>
+                    )}
+                    
+                    <div>
+                      <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-1 font-mono">Email Address</label>
+                      <input 
+                        type="email" 
+                        value={emailInput}
+                        onChange={(e) => setEmailInput(e.target.value)}
+                        placeholder="abdulsamadtaiwo648@gmail.com"
+                        className="w-full bg-black/60 border border-white/10 p-2.5 text-xs focus:border-brand-red focus:outline-none transition-colors text-white font-sans"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-1 font-mono">Password</label>
+                      <input 
+                        type="password" 
+                        value={passwordInput}
+                        onChange={(e) => setPasswordInput(e.target.value)}
+                        placeholder="••••••••"
+                        className="w-full bg-black/60 border border-white/10 p-2.5 text-xs focus:border-brand-red focus:outline-none transition-colors text-white font-sans"
+                        required
+                        minLength={6}
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={actionLoading}
+                      className="w-full border border-white text-white py-3 px-4 font-technical-sm text-[10px] uppercase tracking-widest hover:bg-white hover:text-black hover:border-white transition-all cursor-pointer font-bold disabled:opacity-40"
+                    >
+                      {actionLoading ? 'Verifying Gateway...' : isRegistering ? 'Register & Authenticate' : 'Authorize Security Key'}
+                    </button>
+                    
+                    <div className="text-center pt-2">
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setIsRegistering(!isRegistering);
+                          setLocalError(null);
+                        }}
+                        className="text-[9px] text-[#aeaeae] uppercase hover:text-brand-red tracking-wider transition-colors"
+                      >
+                        {isRegistering ? '← Back to Credentials Gate' : 'New Security Account? Create profile'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
               </div>
 
             </div>
@@ -395,11 +496,11 @@ export const AdminDashboard = () => {
             <div className="pt-6 border-t border-outline-variant/10 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2 opacity-40">
                 <ShieldAlert className="w-4 h-4 text-brand-red" />
-                <span className="font-technical-sm text-[8px] uppercase tracking-widest">DRIVEN LIVES, NEW ZONE // SECURE LOGINS</span>
+                <span className="font-technical-sm text-[8px] uppercase tracking-widest font-mono">DRIVEN LIVES, NEW ZONE // LIVE SECURE FIRESTORE INTEGRATION</span>
               </div>
               <Link 
                 to="/"
-                className="font-technical-sm text-[10px] uppercase tracking-widest text-[#8e8e8e] hover:text-white transition-colors flex items-center gap-1"
+                className="font-technical-sm text-[10px] uppercase tracking-widest text-[#8e8e8e] hover:text-white transition-colors flex items-center gap-1 font-mono"
               >
                 ← Return to Genesis
               </Link>
