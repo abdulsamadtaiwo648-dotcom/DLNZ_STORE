@@ -20,20 +20,41 @@ const COLLECTION_NAME = 'orders';
 
 export const orderService = {
   async getAllOrders(): Promise<Order[]> {
+    const isBypass = typeof window !== 'undefined' && localStorage.getItem('dlnz-dev-auth-bypass') !== null;
+    if (isBypass) {
+      const customLocal = localStorage.getItem('dlnz-orders');
+      if (customLocal) return JSON.parse(customLocal);
+      localStorage.setItem('dlnz-orders', JSON.stringify(localOrders));
+      return localOrders as Order[];
+    }
     try {
       const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) return localOrders;
-      return querySnapshot.docs.map(doc => ({
+      if (querySnapshot.empty) {
+        const customLocal = localStorage.getItem('dlnz-orders');
+        if (customLocal) return JSON.parse(customLocal);
+        return localOrders;
+      }
+      const data = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Order[];
+      localStorage.setItem('dlnz-orders', JSON.stringify(data));
+      return data;
     } catch (error) {
+      console.warn('Firestore fetch failed, using local cache:', error);
+      const customLocal = localStorage.getItem('dlnz-orders');
+      if (customLocal) return JSON.parse(customLocal);
       return localOrders;
     }
   },
 
   async getUserOrders(userId: string): Promise<Order[]> {
+    const isBypass = typeof window !== 'undefined' && localStorage.getItem('dlnz-dev-auth-bypass') !== null;
+    if (isBypass) {
+      const all = await this.getAllOrders();
+      return all.filter(o => o.userId === userId);
+    }
     try {
       const q = query(
         collection(db, COLLECTION_NAME), 
@@ -46,44 +67,69 @@ export const orderService = {
         ...doc.data()
       })) as Order[];
     } catch (error) {
-      return [];
+      const all = await this.getAllOrders();
+      return all.filter(o => o.userId === userId);
     }
   },
 
   async getOrderById(id: string): Promise<Order | null> {
-    const path = `${COLLECTION_NAME}/${id}`;
+    const isBypass = typeof window !== 'undefined' && localStorage.getItem('dlnz-dev-auth-bypass') !== null;
+    if (isBypass) {
+      const all = await this.getAllOrders();
+      return all.find(o => o.id === id) || null;
+    }
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as Order;
       }
-      return localOrders.find(o => o.id === id) || null;
+      const all = await this.getAllOrders();
+      return all.find(o => o.id === id) || null;
     } catch (error) {
-      return localOrders.find(o => o.id === id) || null;
+      const all = await this.getAllOrders();
+      return all.find(o => o.id === id) || null;
     }
   },
 
   async createOrder(order: Omit<Order, 'id'>): Promise<string> {
+    const isBypass = typeof window !== 'undefined' && localStorage.getItem('dlnz-dev-auth-bypass') !== null;
+    const id = `DLNZ-${Math.floor(1000 + Math.random() * 9000)}`;
+    const formattedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    if (isBypass) {
+      const all = await this.getAllOrders();
+      const newOrder = { id, ...order, date: formattedDate, createdAt: new Date().toISOString() };
+      const nextOrders = [newOrder, ...all];
+      localStorage.setItem('dlnz-orders', JSON.stringify(nextOrders));
+      return id;
+    }
     try {
-      const id = `DLNZ-${Math.floor(1000 + Math.random() * 9000)}`;
       const docRef = doc(db, COLLECTION_NAME, id);
       const data = {
         ...order,
         createdAt: serverTimestamp(),
-        // Mapping string dates to timestamps if needed, but Order type uses string
-        // We'll keep it consistent with the schema
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        date: formattedDate
       };
       await setDoc(docRef, data);
       return id;
     } catch (error) {
-      handleFirestoreError(error, OperationType.CREATE, COLLECTION_NAME);
-      return '';
+      console.warn('Firestore create order failed, using local storage fallback:', error);
+      const all = await this.getAllOrders();
+      const newOrder = { id, ...order, date: formattedDate, createdAt: new Date().toISOString() };
+      const nextOrders = [newOrder, ...all];
+      localStorage.setItem('dlnz-orders', JSON.stringify(nextOrders));
+      return id;
     }
   },
 
   async updateOrderStatus(id: string, status: Order['status']): Promise<void> {
+    const isBypass = typeof window !== 'undefined' && localStorage.getItem('dlnz-dev-auth-bypass') !== null;
+    if (isBypass) {
+      const all = await this.getAllOrders();
+      const nextOrders = all.map(o => o.id === id ? { ...o, status, updatedAt: new Date().toISOString() } : o);
+      localStorage.setItem('dlnz-orders', JSON.stringify(nextOrders));
+      return;
+    }
     const path = `${COLLECTION_NAME}/${id}`;
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
@@ -92,7 +138,10 @@ export const orderService = {
         updatedAt: serverTimestamp()
       });
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
+      console.warn('Firestore update order failed, falling back to local storage:', error);
+      const all = await this.getAllOrders();
+      const nextOrders = all.map(o => o.id === id ? { ...o, status, updatedAt: new Date().toISOString() } : o);
+      localStorage.setItem('dlnz-orders', JSON.stringify(nextOrders));
     }
   }
 };
