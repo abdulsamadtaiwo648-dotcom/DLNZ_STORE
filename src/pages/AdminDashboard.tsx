@@ -255,7 +255,7 @@ export const AdminDashboard = () => {
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [nameInput, setNameInput] = useState('');
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
