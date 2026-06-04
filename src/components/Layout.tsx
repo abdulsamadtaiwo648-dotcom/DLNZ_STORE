@@ -12,13 +12,21 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { isAdmin: isUserAdmin } = useAuth();
   const isAdminPath = location.pathname.startsWith('/admin');
 
+  if (isAdminPath) {
+    return (
+      <div className="flex bg-background min-h-screen relative overflow-x-hidden text-primary selection:bg-brand-red selection:text-white">
+        {isUserAdmin && <AdminSidebar />}
+        <main className="flex-grow min-w-0">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen relative overflow-x-hidden">
       <Navbar />
       <div className="flex flex-grow w-full relative">
-        {isAdminPath && isUserAdmin && (
-          <AdminSidebar />
-        )}
         <main className="flex-grow min-w-0 pt-16 lg:pt-0">
           {children}
         </main>

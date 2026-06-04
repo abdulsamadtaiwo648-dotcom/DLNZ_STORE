@@ -4,7 +4,7 @@ import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 
 import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { Product, Order } from '../types';
-import { Download, Edit2, Trash2, Plus, Search, Lock, Database } from 'lucide-react';
+import { Download, Edit2, Trash2, Plus, Search, Lock, Database, ShieldAlert, KeyRound, ArrowRight } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../components/FirebaseProvider';
 import { ProductModal } from '../components/admin/ProductModal';
@@ -302,25 +302,111 @@ export const AdminDashboard = () => {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-background">
-        <Lock className="w-16 h-16 text-brand-red mb-8 opacity-20" />
-        <h1 className="font-display text-4xl md:text-6xl uppercase mb-4">Access Restricted</h1>
-        <p className="font-technical-sm text-xs opacity-40 max-w-md uppercase tracking-[0.3em] mb-12">
-          Security clearance required. Your credentials do not grant access to this sector.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-6">
-          <button 
-            onClick={login}
-            className="px-10 py-4 bg-primary text-on-primary font-technical-sm text-[10px] uppercase tracking-widest hover:bg-brand-red transition-all"
-          >
-            Authenticate
-          </button>
-          <Link 
-            to="/"
-            className="px-10 py-4 border border-outline-variant/30 text-primary font-technical-sm text-[10px] uppercase tracking-widest hover:border-primary transition-all"
-          >
-            Return to Genesis
-          </Link>
+      <div className="min-h-screen flex items-center justify-center p-6 bg-black text-white relative font-sans">
+        {/* Ambient absolute graphics in background */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(139,0,0,0.08)_0%,transparent_70%)] pointer-events-none" />
+        
+        <div className="w-full max-w-2xl border border-outline-variant/20 bg-neutral-950 p-8 sm:p-12 shadow-2xl relative z-10">
+          
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-outline-variant/20">
+            <div className="p-3 bg-brand-red/10 border border-brand-red/30">
+              <Lock className="w-6 h-6 text-brand-red animate-pulse" />
+            </div>
+            <div>
+              <span className="font-technical-sm text-[9px] text-brand-red block tracking-widest uppercase">DLNZ ADMINISTRATION MODULE</span>
+              <h1 className="font-display text-2xl sm:text-3xl uppercase tracking-tight">Security Gateway</h1>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <p className="font-body text-xs text-[#b8b8b8] leading-relaxed">
+              Clearance required to access sector catalogs, active inventory, and master order streams. Please select a secure authentication channel to proceed.
+            </p>
+
+            {/* SEGMENTED GATEWAYS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Option 1: Live Auth */}
+              <div className="border border-outline-variant/30 bg-surface-container-lowest p-6 flex flex-col justify-between hover:border-brand-red transition-all duration-300">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <KeyRound className="w-4 h-4 text-brand-red" />
+                    <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/90">Standard Channel</span>
+                  </div>
+                  <h3 className="font-display text-sm uppercase mb-2">Live Google Auth</h3>
+                  <p className="text-[11px] text-[#8e8e8e] leading-normal mb-6">
+                    Connect through your primary Google Account registered on the Firestore project database.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <button 
+                    onClick={login}
+                    className="w-full bg-brand-red text-white py-3 px-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 hover:bg-red-700 active:scale-95 transition-all cursor-pointer border border-brand-red"
+                  >
+                    Google Sign-In
+                    <ArrowRight className="w-3 h-3" />
+                  </button>
+                  <p className="text-[9px] text-[#6b6b6b] leading-tight font-sans text-center">
+                    📢 <span className="text-brand-red">Notice:</span> If using the embedded preview, click <span className="font-bold underline">"Open in New Tab"</span> at the top right to prevent browser popup block errors.
+                  </p>
+                </div>
+              </div>
+
+              {/* Option 2: Dev Overrides */}
+              <div className="border border-outline-variant/30 bg-surface-container p-6 flex flex-col justify-between hover:border-white/30 transition-all duration-300">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Database className="w-4 h-4 text-white/50" />
+                    <span className="font-technical-sm text-[10px] tracking-widest uppercase text-white/60">Developer Tools</span>
+                  </div>
+                  <h3 className="font-display text-sm uppercase mb-2">Sandbox Override</h3>
+                  <p className="text-[11px] text-[#8e8e8e] leading-normal mb-6">
+                    Bypass cross-origin browser sandbox constraints with direct simulated authorization keys.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem('dlnz-dev-auth-bypass', 'true');
+                      window.location.reload();
+                    }}
+                    className="w-full border border-white/20 text-white py-3 px-4 font-technical-sm text-[10px] uppercase tracking-widest hover:bg-white hover:text-black hover:border-white transition-all cursor-pointer font-bold"
+                  >
+                    Access as Admin
+                  </button>
+                  <button 
+                    onClick={() => {
+                      localStorage.setItem('dlnz-dev-auth-bypass', 'customer');
+                      window.location.reload();
+                    }}
+                    className="w-full text-center text-[9px] text-[#8e8e8e] uppercase hover:text-brand-red py-1 tracking-wider cursor-pointer"
+                  >
+                    Access as Mock Customer
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Bottom Controls / Back */}
+            <div className="pt-6 border-t border-outline-variant/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-2 opacity-40">
+                <ShieldAlert className="w-4 h-4 text-brand-red" />
+                <span className="font-technical-sm text-[8px] uppercase tracking-widest">DRIVEN LIVES, NEW ZONE // SECURE LOGINS</span>
+              </div>
+              <Link 
+                to="/"
+                className="font-technical-sm text-[10px] uppercase tracking-widest text-[#8e8e8e] hover:text-white transition-colors flex items-center gap-1"
+              >
+                ← Return to Genesis
+              </Link>
+            </div>
+
+          </div>
+
         </div>
       </div>
     );
