@@ -21,12 +21,11 @@ export const Collections = () => {
   const searchQuery = searchParams.get('search') || '';
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await productService.getAllProducts();
+    const unsubscribe = productService.subscribeToProducts((data) => {
       setProducts(data);
       setLoading(false);
-    };
-    fetchProducts();
+    });
+    return () => unsubscribe();
   }, []);
 
   if (loading) {

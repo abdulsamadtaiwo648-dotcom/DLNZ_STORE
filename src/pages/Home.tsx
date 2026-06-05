@@ -11,12 +11,11 @@ export const Home = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      const data = await productService.getAllProducts();
+    const unsubscribe = productService.subscribeToProducts((data) => {
       setProducts(data);
       setLoading(false);
-    };
-    fetchProducts();
+    });
+    return () => unsubscribe();
   }, []);
 
   const featured = products.filter(p => p.featured).length >= 3 

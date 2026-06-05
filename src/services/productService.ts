@@ -10,6 +10,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
@@ -29,25 +30,57 @@ export const productService = {
         ...doc.data()
       })) as Product[];
 
-      // Merge: Keep all default products, but override them if altered in Firestore,
-      // and append any custom products created by the admin!
-      const dbProductIds = new Set(dbProducts.map(p => p.id));
-      const mergedProducts = [
-        ...dbProducts,
-        ...localProducts.filter(lp => !dbProductIds.has(lp.id))
-      ];
+      // If the Firestore database has seeded products, we treat Firestore as the single source of truth.
+      // This is crucial so that added, updated, or deleted products from the master admin are perfectly reflected
+      // and deleted default products do not reappear.
+      let productsToUse = dbProducts;
+      if (dbProducts.length === 0) {
+        productsToUse = localProducts;
+      }
 
       // Sort alphabetically by name
-      mergedProducts.sort((a, b) => a.name.localeCompare(b.name));
+      productsToUse = [...productsToUse].sort((a, b) => a.name.localeCompare(b.name));
 
-      localStorage.setItem('dlnz-products', JSON.stringify(mergedProducts));
-      return mergedProducts;
+      localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
+      return productsToUse;
     } catch (error) {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-products');
       if (customLocal) return JSON.parse(customLocal);
       return localProducts;
     }
+  },
+
+  subscribeToProducts(onUpdate: (products: Product[]) => void, onError?: (error: unknown) => void): () => void {
+    const q = query(collection(db, COLLECTION_NAME), orderBy('name'));
+    
+    return onSnapshot(q, (querySnapshot) => {
+      const dbProducts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+
+      let productsToUse = dbProducts;
+      if (dbProducts.length === 0) {
+        productsToUse = localProducts;
+      }
+
+      productsToUse = [...productsToUse].sort((a, b) => a.name.localeCompare(b.name));
+      
+      localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
+      onUpdate(productsToUse);
+    }, (error) => {
+      console.warn('Firestore subscription failed, falling back to local cache/defaults:', error);
+      const customLocal = localStorage.getItem('dlnz-products');
+      if (customLocal) {
+        onUpdate(JSON.parse(customLocal));
+      } else {
+        onUpdate(localProducts);
+      }
+      if (onError) {
+        onError(error);
+      }
+    });
   },
 
   async getProductById(id: string): Promise<Product | null> {

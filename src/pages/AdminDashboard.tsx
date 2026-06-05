@@ -271,16 +271,41 @@ export const AdminDashboard = () => {
       }
     } catch (error) {
       console.error('Fetch error:', error);
-    } finally {
-      setLoading(false);
     }
   }, [isAuthorized]);
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchData();
+    if (authLoading) return;
+
+    let unsubscribeProducts: (() => void) | undefined;
+
+    if (isAuthorized) {
+      // Real-time products subscription
+      unsubscribeProducts = productService.subscribeToProducts((pData) => {
+        setProducts(pData);
+        setLoading(false);
+      });
+
+      // Fetch orders
+      const loadOrders = async () => {
+        try {
+          const oData = await orderService.getAllOrders();
+          setOrders(oData);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+        }
+      };
+      loadOrders();
+    } else {
+      setLoading(false);
     }
-  }, [fetchData, authLoading]);
+
+    return () => {
+      if (unsubscribeProducts) {
+        unsubscribeProducts();
+      }
+    };
+  }, [isAuthorized, authLoading]);
 
   const handleDeleteProduct = async (product: Product) => {
     if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
