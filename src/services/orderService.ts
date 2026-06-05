@@ -9,7 +9,8 @@ import {
   query, 
   where,
   orderBy,
-  serverTimestamp
+  serverTimestamp,
+  onSnapshot
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order } from '../types';
@@ -40,6 +41,36 @@ export const orderService = {
       if (customLocal) return JSON.parse(customLocal);
       return localOrders;
     }
+  },
+
+  subscribeToOrders(onUpdate: (orders: Order[]) => void, onError?: (error: unknown) => void): () => void {
+    const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
+    
+    return onSnapshot(q, (querySnapshot) => {
+      const dbOrders = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Order[];
+
+      let ordersToUse = dbOrders;
+      if (dbOrders.length === 0) {
+        ordersToUse = localOrders;
+      }
+      
+      localStorage.setItem('dlnz-orders', JSON.stringify(ordersToUse));
+      onUpdate(ordersToUse);
+    }, (error) => {
+      console.warn('Firestore orders subscription failed, falling back to local cache/defaults:', error);
+      const customLocal = localStorage.getItem('dlnz-orders');
+      if (customLocal) {
+        onUpdate(JSON.parse(customLocal));
+      } else {
+        onUpdate(localOrders);
+      }
+      if (onError) {
+        onError(error);
+      }
+    });
   },
 
   async getUserOrders(userId: string): Promise<Order[]> {

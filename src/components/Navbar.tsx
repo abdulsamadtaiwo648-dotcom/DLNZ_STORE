@@ -133,28 +133,68 @@ export const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 h-full w-80 bg-surface z-50 border-r border-outline-variant/30 p-10 flex flex-col"
+              className="fixed top-0 left-0 h-full w-80 bg-[#0e0e0e] z-50 border-r border-outline-variant/30 p-10 flex flex-col overflow-hidden"
             >
+              {/* Textured Brutalist Background split effect to match the screenshot perfectly */}
+              <div className="absolute inset-0 z-0 pointer-events-none select-none">
+                {/* Lighter Concrete panel on the left (approx. 45% of width) */}
+                <div 
+                  className="absolute inset-y-0 left-0 w-[45%] bg-zinc-800 bg-cover bg-center brightness-[0.7] contrast-[1.4] opacity-35"
+                  style={{ 
+                    backgroundImage: "url('https://images.unsplash.com/photo-1590069261209-f8e9b8642343?auto=format&fit=crop&w=500&q=80')",
+                    mixBlendMode: 'luminosity'
+                  }} 
+                />
+                {/* Vertical concrete dividing line with beautiful gradient shading */}
+                <div className="absolute top-0 bottom-0 left-[45%] w-[1px] bg-gradient-to-b from-white/10 via-white/20 to-transparent shadow-[0_0_8px_rgba(255,255,255,0.1)]" />
+                <div className="absolute top-0 bottom-0 left-[45%] w-[15px] bg-gradient-to-r from-black/80 to-transparent" />
+                
+                {/* Pitch black right panel */}
+                <div className="absolute inset-y-0 left-[45%] right-0 bg-[#070707]" />
+                
+                {/* Subtle linear/radial overlay */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#070707]/30 to-[#070707]/80 pointer-events-none" />
+              </div>
+
               <button 
                 onClick={() => setIsOpen(false)}
-                className="absolute top-6 right-6 text-primary"
+                className="absolute top-6 right-6 text-white hover:text-brand-red hover:scale-110 active:scale-95 transition-all z-20"
               >
                 <X className="w-6 h-6" />
               </button>
               
-              <div className="mt-20 flex flex-col gap-8">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.label}
-                    to={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="font-display text-4xl uppercase tracking-tighter hover:text-brand-red transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
+              <div className="mt-20 flex flex-col gap-8 relative z-10 flex-grow">
+                <div className="flex flex-col gap-6">
+                  {navLinks.map((link) => {
+                    const words = link.label.split(' ');
+                    const isActive = location.pathname === link.href;
+                    return (
+                      <Link
+                        key={link.label}
+                        to={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className={cn(
+                          "font-display text-[40px] leading-[0.95] font-extrabold uppercase tracking-tight transition-all duration-300 relative group block",
+                          isActive 
+                            ? "text-white" 
+                            : "text-zinc-400 hover:text-white"
+                        )}
+                      >
+                        {words.map((word, idx) => (
+                          <span key={idx} className="block select-none">
+                            {word}
+                          </span>
+                        ))}
+                        {/* Elegant minimalist indicator */}
+                        {isActive && (
+                          <div className="absolute -left-10 top-1/2 -translate-y-1/2 w-1 h-6 bg-brand-red animate-pulse" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
                 
-                <div className="mt-10 pt-10 border-t border-outline-variant/30 flex flex-col gap-6">
+                <div className="mt-auto pt-10 border-t border-outline-variant/30 flex flex-col gap-6">
                   {user ? (
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-3">

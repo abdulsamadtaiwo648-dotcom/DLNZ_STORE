@@ -57,6 +57,7 @@ const compressImage = (file: File): Promise<string> => {
 
 export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [formData, setFormData] = useState<Omit<Product, 'id'>>({
     name: '',
     price: 0,
@@ -77,6 +78,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
   useEffect(() => {
+    setIsSaved(false);
     if (product) {
       const { id, ...rest } = product;
       setFormData(rest);
@@ -142,8 +144,11 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
       } else {
         await productService.createProduct(formData);
       }
+      setIsSaved(true);
       onSuccess();
-      onClose();
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (error) {
       console.error('Save failed:', error);
     } finally {
@@ -155,7 +160,39 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
-      <div className="bg-surface border border-outline-variant/30 w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col">
+      <div className="bg-surface border border-outline-variant/30 w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col relative">
+        
+        {/* Real-time beautiful success notification overlays */}
+        {isSaved && (
+          <div className="absolute inset-0 bg-neutral-950/98 flex flex-col items-center justify-center z-50 p-10 select-none">
+            <div className="border border-emerald-500/30 p-10 bg-zinc-950/80 max-w-md w-full text-center space-y-6 hover:border-emerald-500/50 transition-colors shadow-[0_0_50px_rgba(16,185,129,0.06)] relative overflow-hidden">
+              {/* Futuristic graphic borders */}
+              <div className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-emerald-500" />
+              <div className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-emerald-500" />
+              <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-emerald-500" />
+              <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-emerald-500" />
+              
+              <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-full flex items-center justify-center mx-auto shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                <svg className="w-8 h-8 text-emerald-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              <div className="space-y-2">
+                <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-[0.25em] block animate-pulse font-bold">
+                  SYS CODE 200 // CORE PROTOCOL SUCCESSFUL
+                </span>
+                <h3 className="font-display text-2xl uppercase text-white tracking-widest">
+                  SAVED SUCCESSFULLY
+                </h3>
+                <p className="font-mono text-[10px] text-zinc-400 leading-relaxed uppercase tracking-wider pt-2">
+                  THE INVENTORY SUBROUTINE RECORD WAS SUCCESSFULLY COMMITTED AND DYNAMICALLY PROPAGATED ACROSS ALL ACTIVE REGIONS.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between items-center p-6 border-b border-outline-variant/20 sticky top-0 bg-surface z-10">
           <div>
             <span className="font-technical-sm text-[8px] text-brand-red uppercase tracking-[0.3em] block mb-1">Sector: Inventory / Action: {product ? 'Update' : 'Register'}</span>
@@ -370,10 +407,22 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading || !!uploadProgress}
-                className="w-full bg-primary text-on-primary py-5 font-technical-sm text-[10px] uppercase tracking-[0.4em] font-bold flex items-center justify-center gap-4 hover:bg-brand-red transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer"
+                disabled={loading || !!uploadProgress || isSaved}
+                className={cn(
+                  "w-full py-5 font-technical-sm text-[10px] uppercase tracking-[0.4em] font-bold flex items-center justify-center gap-4 transition-all active:scale-[0.98] disabled:opacity-50 cursor-pointer",
+                  isSaved 
+                    ? "bg-emerald-600 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
+                    : "bg-primary text-on-primary hover:bg-brand-red"
+                )}
               >
-                {loading ? 'Processing...' : (
+                {loading ? 'Processing...' : isSaved ? (
+                  <>
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Subroutine Committed: Saved
+                  </>
+                ) : (
                   <>
                     <Save className="w-4 h-4" />
                     Commit Subroutine

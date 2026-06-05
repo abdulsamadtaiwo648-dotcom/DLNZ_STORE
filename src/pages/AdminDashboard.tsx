@@ -9,80 +9,119 @@ import { cn } from '../lib/utils';
 import { useAuth } from '../components/FirebaseProvider';
 import { ProductModal } from '../components/admin/ProductModal';
 
-const DashboardHome = ({ products, orders, stats }: { products: Product[], orders: Order[], stats: any[] }) => (
-  <>
-    {/* Header */}
-    <section className="mb-16">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 pb-12 border-b border-outline-variant/20">
-        <div>
-          <span className="font-technical-sm text-[10px] text-primary mb-3 block tracking-widest opacity-60">DRIVEN LIVES, NEW ZONE. / STATUS: OPERATIONAL</span>
-          <h1 className="font-display text-4xl md:text-8xl uppercase leading-none">Management</h1>
-        </div>
-        <button className="bg-primary text-on-primary px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:bg-white w-full lg:w-auto justify-center">
-          <Download className="w-4 h-4" />
-          Download Report
-        </button>
-      </div>
-    </section>
+const DashboardHome = ({ products, orders }: { products: Product[], orders: Order[] }) => {
+  const totalRevenue = orders
+    .filter(o => o.status !== 'Hold')
+    .reduce((sum, o) => sum + (o.amount || 0), 0);
 
-    {/* Bento Stats */}
-    <section className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-32">
-      <div className="md:col-span-8 p-10 border border-outline-variant/30 bg-surface-container-lowest relative h-[450px] flex flex-col">
-        <div className="flex justify-between items-start mb-12">
-          <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Revenue Analytics (30D)</h3>
-          <div className="flex items-center gap-3">
-            <div className="w-2 h-2 bg-brand-red rounded-full" />
-            <span className="font-technical-sm text-[10px] uppercase tracking-widest">Live Sales</span>
+  const dynamicStats = React.useMemo(() => {
+    const dailyMap: { [key: string]: number } = {};
+    orders.forEach(o => {
+      const d = o.date ? o.date.split(',')[0].trim() : 'Unknown';
+      dailyMap[d] = (dailyMap[d] || 0) + o.amount;
+    });
+
+    const entries = Object.entries(dailyMap).map(([name, value]) => ({
+      name,
+      value
+    }));
+
+    if (entries.length === 0) {
+      return Array.from({ length: 8 }, (_, i) => ({
+        name: `Day ${i + 1}`,
+        value: 0,
+        active: false
+      }));
+    }
+
+    const sorted = entries.sort((a, b) => a.name.localeCompare(b.name)).slice(-8);
+    const maxVal = Math.max(...sorted.map(s => s.value), 1);
+
+    return sorted.map(s => ({
+      name: s.name,
+      value: s.value,
+      active: s.value === maxVal && s.value > 0
+    }));
+  }, [orders]);
+
+  return (
+    <>
+      {/* Header */}
+      <section className="mb-16">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-10 pb-12 border-b border-outline-variant/20">
+          <div>
+            <span className="font-technical-sm text-[10px] text-primary mb-3 block tracking-widest opacity-60">DRIVEN LIVES, NEW ZONE. / STATUS: OPERATIONAL</span>
+            <h1 className="font-display text-4xl md:text-8xl uppercase leading-none">Management</h1>
+          </div>
+          <button className="bg-primary text-on-primary px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:bg-white w-full lg:w-auto justify-center">
+            <Download className="w-4 h-4" />
+            Download Report
+          </button>
+        </div>
+      </section>
+
+      {/* Bento Stats */}
+      <section className="grid grid-cols-1 md:grid-cols-12 gap-6 mb-32">
+        <div className="md:col-span-8 p-10 border border-outline-variant/30 bg-surface-container-lowest relative h-[450px] flex flex-col">
+          <div className="flex justify-between items-start mb-12">
+            <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Revenue Analytics (Live)</h3>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-brand-red rounded-full animate-ping" />
+              <div className="w-2 h-2 bg-brand-red rounded-full absolute" />
+              <span className="font-technical-sm text-[10px] uppercase tracking-widest pl-3">Real-time Stream</span>
+            </div>
+          </div>
+          
+          <div className="flex-grow">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={dynamicStats}>
+                <Bar dataKey="value" radius={[0, 0, 0, 0]}>
+                   {dynamicStats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.active ? '#8B0000' : '#353535'} />
+                   ))}
+                </Bar>
+                <XAxis dataKey="name" stroke="#4c4546" tick={{ fill: '#888', fontSize: 10, fontFamily: 'Space Mono' }} />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
+                  contentStyle={{ backgroundColor: '#131313', border: '1px solid #4c4546', borderRadius: 0 }}
+                  itemStyle={{ color: '#c6c6c6', fontFamily: 'Space Mono', fontSize: '10px' }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="mt-10">
+            <p className="font-display text-4xl md:text-5xl text-primary leading-none font-bold text-white">
+              ₦{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <p className="font-technical-sm text-[10px] uppercase opacity-40 mt-2 tracking-widest">CALCULATED DYNAMICALLY FROM LIVE TRANSACTIONS</p>
           </div>
         </div>
-        
-        <div className="flex-grow">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={stats}>
-              <Bar dataKey="value" radius={[0, 0, 0, 0]}>
-                 {stats.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.active ? '#8B0000' : '#353535'} />
-                 ))}
-              </Bar>
-              <XAxis dataKey="name" hide />
-              <Tooltip 
-                cursor={{ fill: 'rgba(255,255,255,0.05)' }} 
-                contentStyle={{ backgroundColor: '#131313', border: '1px solid #4c4546', borderRadius: 0 }}
-                itemStyle={{ color: '#c6c6c6', fontFamily: 'Space Mono', fontSize: '10px' }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
 
-        <div className="mt-10">
-          <p className="font-display text-4xl md:text-5xl text-primary leading-none">₦142,800,500.50</p>
-          <p className="font-technical-sm text-[10px] uppercase opacity-40 mt-2 tracking-widest">+12.4% VS PREVIOUS MONTH</p>
+        <div className="md:col-span-4 flex flex-col gap-6">
+          <div className="p-10 border border-outline-variant/30 bg-surface-container flex flex-col justify-between h-1/2">
+             <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Pending Orders</h3>
+             <div className="mt-6">
+                <p className="font-display text-5xl leading-none">
+                   {orders.filter(o => o.status === 'Processing' || o.status === 'Hold').length}
+                </p>
+                <p className="font-technical-sm text-[10px] text-brand-red underline underline-offset-8 mt-4 tracking-widest font-bold">ACTION REQUIRED</p>
+             </div>
+          </div>
+          <div className="p-10 border border-outline-variant/30 bg-surface-container flex flex-col justify-between h-1/2">
+             <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Active SKU Count</h3>
+             <div className="mt-6">
+                <p className="font-display text-5xl leading-none">{products.length.toLocaleString()}</p>
+                <p className="font-technical-sm text-[10px] opacity-40 mt-4 tracking-widest uppercase">
+                   {products.length > 0 ? Math.round((products.filter(p => p.stock > 0).length / products.length) * 100) : 0}% IN STOCK
+                </p>
+             </div>
+          </div>
         </div>
-      </div>
-
-      <div className="md:col-span-4 flex flex-col gap-6">
-        <div className="p-10 border border-outline-variant/30 bg-surface-container flex flex-col justify-between h-1/2">
-           <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Pending Orders</h3>
-           <div className="mt-6">
-              <p className="font-display text-5xl leading-none">
-                 {orders.filter(o => o.status === 'Processing' || o.status === 'Hold').length}
-              </p>
-              <p className="font-technical-sm text-[10px] text-brand-red underline underline-offset-8 mt-4 tracking-widest font-bold">ACTION REQUIRED</p>
-           </div>
-        </div>
-        <div className="p-10 border border-outline-variant/30 bg-surface-container flex flex-col justify-between h-1/2">
-           <h3 className="font-technical-sm text-[10px] tracking-widest opacity-50 uppercase">Active SKU Count</h3>
-           <div className="mt-6">
-              <p className="font-display text-5xl leading-none">{products.length.toLocaleString()}</p>
-              <p className="font-technical-sm text-[10px] opacity-40 mt-4 tracking-widest uppercase">
-                 {Math.round((products.filter(p => p.stock > 0).length / products.length) * 100) || 0}% IN STOCK
-              </p>
-           </div>
-        </div>
-      </div>
-    </section>
-  </>
-);
+      </section>
+    </>
+  );
+};
 
 const InventoryManagement = ({ 
   products, 
@@ -259,65 +298,46 @@ export const AdminDashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      if (isAuthorized) {
-        const [pData, oData] = await Promise.all([
-          productService.getAllProducts(),
-          orderService.getAllOrders()
-        ]);
-        setProducts(pData);
-        setOrders(oData);
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-    }
-  }, [isAuthorized]);
-
   useEffect(() => {
     if (authLoading) return;
 
     let unsubscribeProducts: (() => void) | undefined;
+    let unsubscribeOrders: (() => void) | undefined;
 
     if (isAuthorized) {
+      setLoading(true);
+      
       // Real-time products subscription
       unsubscribeProducts = productService.subscribeToProducts((pData) => {
         setProducts(pData);
         setLoading(false);
+      }, () => {
+        setLoading(false);
       });
 
-      // Fetch orders
-      const loadOrders = async () => {
-        try {
-          const oData = await orderService.getAllOrders();
-          setOrders(oData);
-        } catch (error) {
-          console.error('Error fetching orders:', error);
-        }
-      };
-      loadOrders();
+      // Real-time orders subscription
+      unsubscribeOrders = orderService.subscribeToOrders((oData) => {
+        setOrders(oData);
+      });
     } else {
       setLoading(false);
     }
 
     return () => {
-      if (unsubscribeProducts) {
-        unsubscribeProducts();
-      }
+      if (unsubscribeProducts) unsubscribeProducts();
+      if (unsubscribeOrders) unsubscribeOrders();
     };
   }, [isAuthorized, authLoading]);
 
   const handleDeleteProduct = async (product: Product) => {
     if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
       await productService.deleteProduct(product.id);
-      fetchData();
     }
   };
 
   const handleUpdateOrderStatus = async (id: string, newStatus: Order['status']) => {
     try {
       await orderService.updateOrderStatus(id, newStatus);
-      fetchData();
     } catch (err) {
       console.error('Error updating status:', err);
     }
@@ -542,7 +562,7 @@ export const AdminDashboard = () => {
     <div className="pt-24 lg:pt-16 pb-32 px-6 md:px-12 lg:px-20 min-h-screen">
       <div className="max-w-7xl mx-auto">
         <Routes>
-          <Route path="/" element={<DashboardHome products={products} orders={orders} stats={stats} />} />
+          <Route path="/" element={<DashboardHome products={products} orders={orders} />} />
           <Route path="inventory" element={
             <InventoryManagement 
               products={products} 
@@ -552,8 +572,8 @@ export const AdminDashboard = () => {
             />
           } />
           <Route path="orders" element={<OrdersManagement orders={orders} onUpdateStatus={handleUpdateOrderStatus} />} />
-          <Route path="analytics" element={<DashboardHome products={products} orders={orders} stats={stats} />} />
-          <Route path="*" element={<DashboardHome products={products} orders={orders} stats={stats} />} />
+          <Route path="analytics" element={<DashboardHome products={products} orders={orders} />} />
+          <Route path="*" element={<DashboardHome products={products} orders={orders} />} />
         </Routes>
       </div>
 
@@ -561,7 +581,7 @@ export const AdminDashboard = () => {
         isOpen={isModalOpen}
         product={selectedProduct}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchData}
+        onSuccess={() => {}}
       />
     </div>
   );
