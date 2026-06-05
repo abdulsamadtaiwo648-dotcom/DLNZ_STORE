@@ -107,12 +107,30 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [user]);
 
   // Option A checkout (WhatsApp Order Breakdown)
-  const handleWhatsAppCheckout = () => {
+  const handleWhatsAppCheckout = async () => {
+    let orderId = '';
+    try {
+      // Create a database entry so the order registers on the admin panel in real-time
+      orderId = await orderService.createOrder({
+        customerName: customerName || user?.displayName || 'Guest User',
+        customerEmail: customerEmail || user?.email || 'guest@example.com',
+        userId: user?.uid || 'guest-checkout',
+        amount: subtotal,
+        status: 'Processing',
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`
+      });
+    } catch (err) {
+      console.warn('Real-time order registration for WhatsApp cart failed:', err);
+    }
+
     const cartSummary = cart.map(
       item => `- ${item.product.name} [Size: ${item.selectedSize}] x ${item.quantity} = ₦${(item.product.price * item.quantity).toLocaleString()}`
     ).join('\n');
 
-    const message = `Hello DLNZ, I would like to place an order for the following collector items:
+    const orderIdString = orderId ? ` (Order ID: ${orderId})` : '';
+
+    const message = `Hello DLNZ, I would like to place an order for the following collector items${orderIdString}:
 
 ${cartSummary}
 
@@ -123,6 +141,8 @@ Shipping: ${shippingAddress || 'To be specified'}
 Please advise on carrier scheduling and completion of purchase.`;
 
     window.open(WHATSAPP_LINK(message), '_blank');
+    clearCart();
+    setIsCartOpen(false);
   };
 
   // Option B checkout (Firestore Registered Order)

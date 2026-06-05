@@ -14,7 +14,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Order } from '../types';
-import { orders as localOrders } from '../data';
 import { OperationType, handleFirestoreError } from '../components/FirebaseProvider';
 
 const COLLECTION_NAME = 'orders';
@@ -27,7 +26,7 @@ export const orderService = {
       if (querySnapshot.empty) {
         const customLocal = localStorage.getItem('dlnz-orders');
         if (customLocal) return JSON.parse(customLocal);
-        return localOrders;
+        return [];
       }
       const data = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -39,7 +38,7 @@ export const orderService = {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-orders');
       if (customLocal) return JSON.parse(customLocal);
-      return localOrders;
+      return [];
     }
   },
 
@@ -52,10 +51,7 @@ export const orderService = {
         ...doc.data()
       })) as Order[];
 
-      let ordersToUse = dbOrders;
-      if (dbOrders.length === 0) {
-        ordersToUse = localOrders;
-      }
+      const ordersToUse = dbOrders;
       
       localStorage.setItem('dlnz-orders', JSON.stringify(ordersToUse));
       onUpdate(ordersToUse);
@@ -65,7 +61,7 @@ export const orderService = {
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate(localOrders);
+        onUpdate([]);
       }
       if (onError) {
         onError(error);
