@@ -58,7 +58,7 @@ const compressImage = (file: File): Promise<string> => {
 export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductModalProps) => {
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [formData, setFormData] = useState<Omit<Product, 'id'>>({
+  const [formData, setFormData] = useState<Omit<Product, 'id'> & { featured?: boolean; limited?: boolean }>({
     name: '',
     price: 0,
     category: '',
@@ -70,7 +70,9 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
     description: '',
     material: '',
     colors: [],
-    details: []
+    details: [],
+    featured: false,
+    limited: false
   });
 
   const [imageTab, setImageTab] = useState<'primary' | 'hover'>('primary');
@@ -81,7 +83,22 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
     setIsSaved(false);
     if (product) {
       const { id, ...rest } = product;
-      setFormData(rest);
+      setFormData({
+        name: rest.name || '',
+        price: rest.price || 0,
+        category: rest.category || 'Apparel',
+        subcategory: rest.subcategory || '',
+        image: rest.image || '',
+        hoverImage: rest.hoverImage || '',
+        stock: rest.stock || 0,
+        sku: rest.sku || '',
+        description: rest.description || '',
+        material: rest.material || '',
+        colors: rest.colors || [],
+        details: rest.details || [],
+        featured: rest.featured || false,
+        limited: rest.limited || false
+      });
     } else {
       setFormData({
         name: '',
@@ -95,7 +112,9 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         description: '',
         material: '',
         colors: [],
-        details: []
+        details: [],
+        featured: false,
+        limited: false
       });
     }
   }, [product, isOpen]);
@@ -134,7 +153,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.image) {
-      alert('Please set a primary product image before committing.');
+      alert('Please set a primary product image before saving.');
       return;
     }
     setLoading(true);
@@ -180,13 +199,13 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
               
               <div className="space-y-2">
                 <span className="font-mono text-[9px] text-emerald-400 uppercase tracking-[0.25em] block animate-pulse font-bold">
-                  SYS CODE 200 // CORE PROTOCOL SUCCESSFUL
+                  DATABASE ACTION SUCCESSFUL
                 </span>
                 <h3 className="font-display text-2xl uppercase text-white tracking-widest">
                   SAVED SUCCESSFULLY
                 </h3>
                 <p className="font-mono text-[10px] text-zinc-400 leading-relaxed uppercase tracking-wider pt-2">
-                  THE INVENTORY SUBROUTINE RECORD WAS SUCCESSFULLY COMMITTED AND DYNAMICALLY PROPAGATED ACROSS ALL ACTIVE REGIONS.
+                  THE PRODUCT HAS BEEN SUCCESSFULLY SAVED AND DYNAMICALLY UPDATED ACROSS THE ENTIRE STORE IN REAL-TIME.
                 </p>
               </div>
             </div>
@@ -195,7 +214,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
         <div className="flex justify-between items-center p-6 border-b border-outline-variant/20 sticky top-0 bg-surface z-10">
           <div>
-            <span className="font-technical-sm text-[8px] text-brand-red uppercase tracking-[0.3em] block mb-1">Sector: Inventory / Action: {product ? 'Update' : 'Register'}</span>
+            <span className="font-technical-sm text-[8px] text-brand-red uppercase tracking-[0.3em] block mb-1">Action: {product ? 'Update' : 'Register Product'}</span>
             <h2 className="font-display text-2xl uppercase tracking-tighter">{product ? 'Modify SKU' : 'New Entry'}</h2>
           </div>
           <button onClick={onClose} className="p-2 hover:bg-surface-variant transition-colors">
@@ -278,6 +297,71 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                 className="w-full bg-surface-container border border-outline-variant/30 p-4 font-body text-sm min-h-[120px] focus:border-brand-red outline-none transition-colors"
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
+              />
+            </div>
+
+            {/* Additional Info: Material, Featured & Limited */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest">Material</label>
+                <input
+                  className="w-full bg-surface-container border border-outline-variant/30 p-4 font-body text-sm uppercase focus:border-brand-red outline-none transition-colors"
+                  value={formData.material || ''}
+                  onChange={e => setFormData({ ...formData, material: e.target.value })}
+                  placeholder="E.G. 100% COTTON"
+                />
+              </div>
+              <div className="flex flex-col justify-end gap-3 pb-2 select-none">
+                <label className="flex items-center gap-3 cursor-pointer text-xs font-technical-sm opacity-80 hover:text-white transition-colors">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded-sm bg-surface-container border border-outline-variant/30 checked:bg-brand-red checked:border-brand-red outline-none cursor-pointer"
+                    checked={!!formData.featured}
+                    onChange={e => setFormData({ ...formData, featured: e.target.checked })}
+                  />
+                  <span>FEATURED ITEM</span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer text-xs font-technical-sm opacity-80 hover:text-white transition-colors">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded-sm bg-surface-container border border-outline-variant/30 checked:bg-brand-red checked:border-brand-red outline-none cursor-pointer"
+                    checked={!!formData.limited}
+                    onChange={e => setFormData({ ...formData, limited: e.target.checked })}
+                  />
+                  <span>LIMITED EDITION</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Colors (Comma-separated) */}
+            <div className="space-y-2">
+              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block">
+                Finish Colors (Comma Separated)
+              </label>
+              <input
+                className="w-full bg-surface-container border border-outline-variant/30 p-4 font-technical-sm text-xs focus:border-brand-red outline-none transition-colors"
+                value={formData.colors?.join(', ') || ''}
+                onChange={e => setFormData({ 
+                  ...formData, 
+                  colors: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
+                })}
+                placeholder="E.G. Black, White, #8B0000"
+              />
+            </div>
+
+            {/* Core Details (Line-separated) */}
+            <div className="space-y-2">
+              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block">
+                Bullet Details (One Per Line)
+              </label>
+              <textarea
+                className="w-full bg-surface-container border border-outline-variant/30 p-4 font-body text-sm min-h-[100px] focus:border-brand-red outline-none transition-colors"
+                value={formData.details?.join('\n') || ''}
+                onChange={e => setFormData({ 
+                  ...formData, 
+                  details: e.target.value.split('\n').map(s => s.trim()).filter(Boolean)
+                })}
+                placeholder="E.G. Custom hardware accents&#10;Adjustable strap with snap lock&#10;Water-resistant finish"
               />
             </div>
           </div>
@@ -420,12 +504,12 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                     <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                     </svg>
-                    Subroutine Committed: Saved
+                    Saved Successfully
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    Commit Subroutine
+                    Save Product
                   </>
                 )}
               </button>

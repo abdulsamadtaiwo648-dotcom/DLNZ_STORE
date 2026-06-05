@@ -5,7 +5,9 @@ export interface Product {
   description: string;
   price: number;
   category: string;
+  subcategory?: string;
   image: string;
+  hoverImage?: string;
   images?: string[];
   stock: number;
   featured?: boolean;
