@@ -31,7 +31,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        return localStorage.getItem('dlnz-admin-authorized') === 'true';
+      }
+    } catch (_) {}
+    return false;
+  });
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -43,56 +50,54 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         
         if (user) {
           console.log('User detected:', user.email);
-          const idToken = await user.getIdTokenResult();
-          console.log('User Email from Token:', idToken.claims.email);
           
           // Determine Admin authorization:
           // ONLY the master admin email 'abdulsamadtaiwo648@gmail.com' is allowed.
           const isMasterAdmin = user.email === 'abdulsamadtaiwo648@gmail.com';
           setIsAdmin(isMasterAdmin);
           
-          // Auto-seed if database is empty (Check for any authorized user)
-          try {
-            console.log('Checking if seeding is needed...');
+          if (isMasterAdmin) {
+            localStorage.setItem('dlnz-admin-authorized', 'true');
             
-            if (!auth.currentUser) {
-              console.error('No current user found during seeding check!');
-              return;
-            }
-
-            let productSnap;
+            // Auto-seed if database is empty - ONLY when master admin logs in
             try {
-              productSnap = await getDocsFromServer(collection(db, 'products'));
-            } catch (e) {
-              handleFirestoreError(e, OperationType.LIST, 'products');
-              return;
-            }
-
-            if (productSnap.empty) {
-              console.log('Database empty, starting seed process...');
-              
-              // Seed Products
-              for (const p of products) {
-                try {
-                  const { id, ...data } = p;
-                  await setDoc(doc(db, 'products', id), { 
-                    ...data, 
-                    updatedAt: serverTimestamp() 
-                  });
-                } catch (err) {
-                  handleFirestoreError(err, OperationType.CREATE, `products/${p.id}`);
-                }
+              console.log('Checking if seeding is needed for empty collection...');
+              let productSnap;
+              try {
+                productSnap = await getDocsFromServer(collection(db, 'products'));
+              } catch (e) {
+                console.warn('Seeding product verify query failed, attempting standard read...');
+                productSnap = await getDocs(collection(db, 'products'));
               }
-              console.log('Products seeding attempt completed.');
-              console.log('Full seeding attempt finished.');
-            } else {
-              console.log('Database already has data, skipping seed.');
+
+              if (productSnap.empty) {
+                console.log('Database empty, starting seed process...');
+                
+                // Seed Products
+                for (const p of products) {
+                  try {
+                    const { id, ...data } = p;
+                    await setDoc(doc(db, 'products', id), { 
+                      ...data, 
+                      updatedAt: serverTimestamp() 
+                    });
+                  } catch (err) {
+                    console.error('Failed to seed individual product:', p.id, err);
+                  }
+                }
+                console.log('Products seeding finished.');
+              } else {
+                console.log('Database already has data, skipping seed.');
+              }
+            } catch (e) {
+              console.error('Seeding check/read failed:', e);
             }
-          } catch (e) {
-            console.error('Seeding check/read failed:', e);
+          } else {
+            localStorage.removeItem('dlnz-admin-authorized');
           }
         } else {
           setIsAdmin(false);
+          localStorage.removeItem('dlnz-admin-authorized');
         }
       } catch (error) {
         console.error('Auth logic error:', error);

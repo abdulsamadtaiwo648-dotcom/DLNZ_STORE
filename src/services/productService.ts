@@ -23,17 +23,25 @@ export const productService = {
     try {
       const q = query(collection(db, COLLECTION_NAME), orderBy('name'));
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        const customLocal = localStorage.getItem('dlnz-products');
-        if (customLocal) return JSON.parse(customLocal);
-        return localProducts;
-      }
-      const data = querySnapshot.docs.map(doc => ({
+      
+      const dbProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
-      localStorage.setItem('dlnz-products', JSON.stringify(data));
-      return data;
+
+      // Merge: Keep all default products, but override them if altered in Firestore,
+      // and append any custom products created by the admin!
+      const dbProductIds = new Set(dbProducts.map(p => p.id));
+      const mergedProducts = [
+        ...dbProducts,
+        ...localProducts.filter(lp => !dbProductIds.has(lp.id))
+      ];
+
+      // Sort alphabetically by name
+      mergedProducts.sort((a, b) => a.name.localeCompare(b.name));
+
+      localStorage.setItem('dlnz-products', JSON.stringify(mergedProducts));
+      return mergedProducts;
     } catch (error) {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-products');
@@ -82,10 +90,12 @@ export const productService = {
     const path = `${COLLECTION_NAME}/${id}`;
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
-      await updateDoc(docRef, {
+      // Use setDoc with merge: true so that if a default product has not yet been seeded to Firestore
+      // (or if it is missing), updating it will automatically create it in the database safely!
+      await setDoc(docRef, {
         ...updates,
         updatedAt: serverTimestamp()
-      });
+      }, { merge: true });
       
       // Seed cache
       const all = await this.getAllProducts().catch(() => []);
