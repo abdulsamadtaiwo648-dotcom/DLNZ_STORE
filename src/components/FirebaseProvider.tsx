@@ -58,40 +58,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           
           if (isMasterAdmin) {
             localStorage.setItem('dlnz-admin-authorized', 'true');
-            
-            // Auto-seed if database is empty - ONLY when master admin logs in
-            try {
-              console.log('Checking if seeding is needed for empty collection...');
-              let productSnap;
-              try {
-                productSnap = await getDocsFromServer(collection(db, 'products'));
-              } catch (e) {
-                console.warn('Seeding product verify query failed, attempting standard read...');
-                productSnap = await getDocs(collection(db, 'products'));
-              }
-
-              if (productSnap.empty) {
-                console.log('Database empty, starting seed process...');
-                
-                // Seed Products
-                for (const p of products) {
-                  try {
-                    const { id, ...data } = p;
-                    await setDoc(doc(db, 'products', id), { 
-                      ...data, 
-                      updatedAt: serverTimestamp() 
-                    });
-                  } catch (err) {
-                    console.error('Failed to seed individual product:', p.id, err);
-                  }
-                }
-                console.log('Products seeding finished.');
-              } else {
-                console.log('Database already has data, skipping seed.');
-              }
-            } catch (e) {
-              console.error('Seeding check/read failed:', e);
-            }
           } else {
             localStorage.removeItem('dlnz-admin-authorized');
           }

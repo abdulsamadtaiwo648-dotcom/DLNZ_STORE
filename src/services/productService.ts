@@ -14,7 +14,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { Product } from '../types';
-import { products as localProducts } from '../data';
 import { OperationType, handleFirestoreError } from '../components/FirebaseProvider';
 
 const COLLECTION_NAME = 'products';
@@ -30,16 +29,8 @@ export const productService = {
         ...doc.data()
       })) as Product[];
 
-      // If the Firestore database has seeded products, we treat Firestore as the single source of truth.
-      // This is crucial so that added, updated, or deleted products from the master admin are perfectly reflected
-      // and deleted default products do not reappear.
-      let productsToUse = dbProducts;
-      if (dbProducts.length === 0) {
-        productsToUse = localProducts;
-      }
-
       // Sort alphabetically by name
-      productsToUse = [...productsToUse].sort((a, b) => a.name.localeCompare(b.name));
+      const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
 
       localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
       return productsToUse;
@@ -47,7 +38,7 @@ export const productService = {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-products');
       if (customLocal) return JSON.parse(customLocal);
-      return localProducts;
+      return [];
     }
   },
 
@@ -60,12 +51,7 @@ export const productService = {
         ...doc.data()
       })) as Product[];
 
-      let productsToUse = dbProducts;
-      if (dbProducts.length === 0) {
-        productsToUse = localProducts;
-      }
-
-      productsToUse = [...productsToUse].sort((a, b) => a.name.localeCompare(b.name));
+      const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
       
       localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
       onUpdate(productsToUse);
@@ -75,7 +61,7 @@ export const productService = {
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate(localProducts);
+        onUpdate([]);
       }
       if (onError) {
         onError(error);
