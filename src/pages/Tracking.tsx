@@ -7,13 +7,18 @@ import { Order } from '../types';
 import { WHATSAPP_LINK } from '../constants';
 
 export const Tracking = () => {
-  const [orderIdInput, setOrderIdInput] = useState('DLNZ-9921');
-  const [activeOrderId, setActiveOrderId] = useState('DLNZ-9921');
+  const [orderIdInput, setOrderIdInput] = useState('');
+  const [activeOrderId, setActiveOrderId] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
+    if (!activeOrderId) {
+      setOrder(null);
+      setLoading(false);
+      return;
+    }
     const fetchOrder = async () => {
       setLoading(true);
       setErrorMsg('');
@@ -121,20 +126,14 @@ export const Tracking = () => {
           <p className="font-technical-sm text-xs opacity-60 uppercase tracking-widest">Accessing Logistical Nodes...</p>
         </div>
       ) : errorMsg ? (
-        <div className="min-h-[450px] border border-outline-variant/30 bg-surface-container-lowest p-16 text-center max-w-2xl mx-auto flex flex-col items-center justify-center">
+        <div className="min-h-[400px] border border-outline-variant/30 bg-surface-container-lowest p-16 text-center max-w-2xl mx-auto flex flex-col items-center justify-center">
           <div className="w-16 h-16 rounded-full bg-brand-charcoal border border-brand-red/30 flex items-center justify-center mb-8">
             <Search className="w-6 h-6 text-brand-red" />
           </div>
           <h2 className="font-display text-3xl uppercase mb-4 tracking-tighter">No Record Found</h2>
-          <p className="font-technical-sm text-[10px] uppercase opacity-40 max-w-sm tracking-widest mb-10 leading-relaxed">
+          <p className="font-technical-sm text-[10px] uppercase opacity-40 max-w-sm tracking-widest leading-relaxed">
             {errorMsg} Check your spelling or coordinate with support to verify registration.
           </p>
-          <button 
-            onClick={() => { setOrderIdInput('DLNZ-9921'); setActiveOrderId('DLNZ-9921'); }}
-            className="px-8 py-4 bg-brand-charcoal hover:bg-surface border border-outline-variant/40 font-technical-sm text-[10px] uppercase tracking-widest active:scale-95 transition-all text-primary font-bold cursor-pointer"
-          >
-            Load Sample ID
-          </button>
         </div>
       ) : order ? (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-24">
@@ -226,7 +225,17 @@ export const Tracking = () => {
             </div>
           </div>
         </div>
-      ) : null}
+      ) : (
+        <div className="min-h-[350px] border border-outline-variant/20 bg-surface-container-lowest p-12 text-center max-w-xl mx-auto flex flex-col items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-brand-charcoal border border-outline-variant/30 flex items-center justify-center mb-6">
+            <Package className="w-5 h-5 text-brand-red animate-pulse" />
+          </div>
+          <h2 className="font-display text-2xl uppercase mb-3 tracking-tighter">No Active Lookup</h2>
+          <p className="font-technical-sm text-[10px] uppercase opacity-40 max-w-xs tracking-widest leading-relaxed">
+            Please enter your unique Order ID in the query panel above to track your order.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
