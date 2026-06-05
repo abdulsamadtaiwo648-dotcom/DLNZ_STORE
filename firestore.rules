@@ -20,9 +20,9 @@ service cloud.firestore {
              exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
-    // Admin override helper - Allow any signed-in user to act as admin
+    // Admin override helper - Allow only the master admin or verified admins
     function isAdmin() {
-      return isSignedIn();
+      return isMasterAdmin() || hasAdminDoc();
     }
 
     // Catch-all Default Deny

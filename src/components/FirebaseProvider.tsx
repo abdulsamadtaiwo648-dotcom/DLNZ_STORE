@@ -46,8 +46,29 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           const idToken = await user.getIdTokenResult();
           console.log('User Email from Token:', idToken.claims.email);
           
-          // Any signed-in user is authorized as Admin/Manager per user instructions
-          setIsAdmin(true);
+          // Determine Admin authorization:
+          // 1. Is the master admin email 'abdulsamadtaiwo648@gmail.com'?
+          // 2. Or is there an admin document for this user ID in the database?
+          const isMasterAdmin = user.email === 'abdulsamadtaiwo648@gmail.com';
+          let hasAdminDoc = false;
+          
+          try {
+            const adminDocRef = doc(db, 'admins', user.uid);
+            const adminDocSnap = await getDoc(adminDocRef);
+            hasAdminDoc = adminDocSnap.exists();
+            
+            // If they are the master admin, but don't have an admin document yet,
+            // let's create one for them so they satisfy the secure rules checks
+            if (isMasterAdmin && !hasAdminDoc) {
+              await setDoc(adminDocRef, { email: user.email });
+              hasAdminDoc = true;
+              console.log('Admin document created for master admin during check.');
+            }
+          } catch (err) {
+            console.warn('Admin status verify check warning:', err);
+          }
+          
+          setIsAdmin(isMasterAdmin || hasAdminDoc);
           
           // Auto-seed if database is empty (Check for any authorized user)
           try {
@@ -103,6 +124,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
                  console.log('Creating admin document for:', user.uid);
                  await setDoc(doc(db, 'admins', user.uid), { email: user.email });
                  console.log('Admin document created.');
+                 setIsAdmin(true);
               } catch (err) {
                  handleFirestoreError(err, OperationType.CREATE, `admins/${user.uid}`);
               }
