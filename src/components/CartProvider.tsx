@@ -22,7 +22,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, login } = useAuth();
+  const { user, setIsAuthModalOpen } = useAuth();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -129,7 +129,7 @@ Please advise on carrier scheduling and completion of purchase.`;
   const handleDigitalCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      await login();
+      setIsAuthModalOpen(true);
       return;
     }
 
@@ -391,10 +391,10 @@ Please advise on carrier scheduling and completion of purchase.`;
                             </p>
                             <button
                               type="button"
-                              onClick={login}
+                              onClick={() => setIsAuthModalOpen(true)}
                               className="font-technical-sm text-[9px] uppercase font-bold tracking-widest bg-white text-black px-6 py-2"
                             >
-                              Sign In with Google
+                              Sign In / Register
                             </button>
                           </div>
                         ) : (

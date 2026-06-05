@@ -23,6 +23,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   authError: string | null;
   setAuthError: (err: string | null) => void;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   useEffect(() => {
     const unsubAuth = onAuthStateChanged(auth, async (user) => {
@@ -204,7 +207,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       registerWithEmail, 
       logout, 
       authError, 
-      setAuthError 
+      setAuthError,
+      isAuthModalOpen,
+      setIsAuthModalOpen
     }}>
       {children}
     </AuthContext.Provider>

@@ -14,7 +14,7 @@ export const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, login, logout, isAdmin: isUserAdmin } = useAuth();
+  const { user, logout, isAdmin: isUserAdmin, setIsAuthModalOpen } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
 
 
@@ -180,7 +180,7 @@ export const Navbar = () => {
                     </div>
                   ) : (
                     <button 
-                      onClick={() => { login(); setIsOpen(false); }}
+                      onClick={() => { setIsAuthModalOpen(true); setIsOpen(false); }}
                       className="flex items-center gap-2 font-technical-sm text-label-xs uppercase tracking-widest text-on-surface hover:text-brand-red transition-colors"
                     >
                       <UserIcon className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { AdminSidebar } from './AdminSidebar';
 import { useAuth } from './FirebaseProvider';
+import { AuthModal } from './AuthModal';
 import { MessageSquare } from 'lucide-react';
 import { WHATSAPP_LINK } from '../constants';
 
@@ -19,6 +20,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         <main className="flex-grow min-w-0">
           {children}
         </main>
+        <AuthModal />
       </div>
     );
   }
@@ -32,6 +34,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </main>
       </div>
       <Footer />
+      <AuthModal />
 
       {/* Floating WhatsApp Support */}
       <a 
