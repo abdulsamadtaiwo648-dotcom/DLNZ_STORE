@@ -118,7 +118,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         userId: user?.uid || 'guest-checkout',
         amount: subtotal,
         status: 'Processing',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
         tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`
       });
     } catch (err) {
@@ -168,7 +168,7 @@ Please advise on carrier scheduling and completion of purchase.`;
         userId: user.uid,
         amount: subtotal,
         status: 'Processing',
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
         tracking: trackingCode
       });
 

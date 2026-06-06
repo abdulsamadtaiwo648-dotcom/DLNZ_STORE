@@ -94,7 +94,7 @@ export const Tracking = () => {
   };
 
   const steps = [
-    { label: 'Order Received', date: `${orderDate} - 09:41`, status: getStatusType('Order Received'), icon: Box },
+    { label: 'Order Received', date: orderDate.includes(':') ? orderDate : `${orderDate} - 09:41`, status: getStatusType('Order Received'), icon: Box },
     { 
       label: 'Processing', 
       date: status === 'Processing' || status === 'Hold' ? 'CURRENT ZONE' : 'COMPLETED', 

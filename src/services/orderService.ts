@@ -125,7 +125,7 @@ export const orderService = {
 
   async createOrder(order: Omit<Order, 'id'>): Promise<string> {
     const id = `DLNZ-${Math.floor(1000 + Math.random() * 9000)}`;
-    const formattedDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const formattedDate = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
     try {
       const docRef = doc(db, COLLECTION_NAME, id);
       const data = {

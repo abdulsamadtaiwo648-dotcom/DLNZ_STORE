@@ -133,7 +133,7 @@ export const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 h-full w-80 bg-[#0c0c0c] z-50 border-r border-outline-variant/30 p-10 flex flex-col shadow-2xl"
+              className="fixed top-0 left-0 h-full w-80 bg-black z-50 border-r border-outline-variant/30 p-10 flex flex-col shadow-2xl"
             >
               <button 
                 onClick={() => setIsOpen(false)}
