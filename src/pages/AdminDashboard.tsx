@@ -354,9 +354,12 @@ export const AdminDashboard = () => {
     if (window.confirm('Are you sure you want to seed the default luxury items as live Firebase entries? This will register products and initial master orders in real-time.')) {
       setSeedingLoading(true);
       try {
-        const { seedDatabase } = await import('../lib/seed');
-        await seedDatabase();
-        alert('Database populated with live DLNZ inventory and order logs successfully!');
+        const response = await fetch('/api/admin/seed', { method: 'POST' });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        alert('Database populated with live DLNZ inventory and order logs successfully via Express backend!');
       } catch (err: any) {
         console.error('Seeding error:', err);
         alert(`Seeding exception: ${err?.message || err}`);

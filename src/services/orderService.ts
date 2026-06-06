@@ -22,25 +22,36 @@ const COLLECTION_NAME = 'orders';
 export const orderService = {
   async getAllOrders(): Promise<Order[]> {
     try {
-      const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
-      const querySnapshot = await getDocs(q);
-      
-      let dbOrders = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Order[];
-
-      if (dbOrders.length === 0) {
-        dbOrders = localOrders;
+      const response = await fetch('/api/admin/orders');
+      if (response.ok) {
+        const data = await response.json() as Order[];
+        localStorage.setItem('dlnz-orders', JSON.stringify(data));
+        return data;
       }
-
-      localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
-      return dbOrders;
+      throw new Error(`REST API returned status ${response.status}`);
     } catch (error) {
-      console.warn('Firestore fetch failed, using local cache:', error);
-      const customLocal = localStorage.getItem('dlnz-orders');
-      if (customLocal) return JSON.parse(customLocal);
-      return localOrders;
+      console.warn('REST API order fetch failed, falling back to Firestore client:', error);
+      try {
+        const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
+        const querySnapshot = await getDocs(q);
+        
+        let dbOrders = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Order[];
+
+        if (dbOrders.length === 0) {
+          dbOrders = localOrders;
+        }
+
+        localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
+        return dbOrders;
+      } catch (fsError) {
+        console.warn('Firestore orders fetch failed fallback:', fsError);
+        const customLocal = localStorage.getItem('dlnz-orders');
+        if (customLocal) return JSON.parse(customLocal);
+        return localOrders;
+      }
     }
   },
 
@@ -130,20 +141,25 @@ export const orderService = {
   },
 
   async updateOrderStatus(id: string, status: Order['status']): Promise<void> {
-    const path = `${COLLECTION_NAME}/${id}`;
     try {
-      const docRef = doc(db, COLLECTION_NAME, id);
-      await updateDoc(docRef, { 
-        status,
-        updatedAt: serverTimestamp()
+      const response = await fetch(`/api/admin/orders/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
       });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
       
       // Update cache
       const all = await this.getAllOrders().catch(() => []);
       const nextOrders = all.map(o => o.id === id ? { ...o, status, updatedAt: new Date().toISOString() } : o);
       localStorage.setItem('dlnz-orders', JSON.stringify(nextOrders));
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, path);
+      console.error('Backend updateOrderStatus failed:', error);
       throw error;
     }
   }

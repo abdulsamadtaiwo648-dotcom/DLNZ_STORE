@@ -125,7 +125,20 @@ export const Collections = () => {
                   className="group relative"
                 >
                   <div className="aspect-[3/4] overflow-hidden bg-surface-container-low relative border border-outline-variant/10">
-                    <img alt={product.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={product.image} />
+                    <img 
+                      alt={product.name} 
+                      className={`w-full h-full object-cover transition-all duration-700 ${
+                        product.hoverImage ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-110'
+                      }`} 
+                      src={product.image} 
+                    />
+                    {product.hoverImage && (
+                      <img 
+                        alt={`${product.name} Alternate`} 
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 scale-105 group-hover:opacity-100 group-hover:scale-110 pointer-events-none" 
+                        src={product.hoverImage} 
+                      />
+                    )}
                     
                     {/* Hover State: Quick Add */}
                     <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-8 text-center backdrop-blur-[2px]">

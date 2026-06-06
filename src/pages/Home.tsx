@@ -79,7 +79,20 @@ export const Home = () => {
             to={featured[0]?.id ? `/product/${featured[0].id}` : '/collections'}
             className="md:col-span-8 group relative overflow-hidden aspect-[4/5] md:aspect-auto md:h-[600px] border border-outline-variant/30 block cursor-pointer"
           >
-            <img alt="Drop 1" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={featured[0]?.image} />
+            <img 
+              alt="Drop 1" 
+              className={`w-full h-full object-cover transition-all duration-700 ${
+                featured[0]?.hoverImage ? 'group-hover:opacity-0 group-hover:scale-102' : 'group-hover:scale-105'
+              }`} 
+              src={featured[0]?.image} 
+            />
+            {featured[0]?.hoverImage && (
+              <img 
+                alt="Drop 1 Alternate" 
+                className="absolute inset-0 w-full h-full object-cover transition-all duration-700 opacity-0 scale-102 group-hover:opacity-100 group-hover:scale-105 pointer-events-none" 
+                src={featured[0]?.hoverImage} 
+              />
+            )}
             <div className="absolute bottom-10 left-10 z-20">
               <p className="font-technical-sm text-[10px] bg-black/80 text-white px-3 py-1 mb-3 inline-block">SS24-JK01</p>
               <h3 className="font-display text-3xl md:text-4xl text-white uppercase group-hover:text-brand-red transition-colors">{featured[0]?.name}</h3>
@@ -94,7 +107,20 @@ export const Home = () => {
               to={featured[1]?.id ? `/product/${featured[1].id}` : '/collections'}
               className="group relative overflow-hidden aspect-square border border-outline-variant/30 block cursor-pointer"
             >
-              <img alt="Drop 2" className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" src={featured[1]?.image} />
+              <img 
+                alt="Drop 2" 
+                className={`w-full h-full object-cover grayscale transition-all duration-700 ${
+                  featured[1]?.hoverImage ? 'group-hover:opacity-0 group-hover:scale-102' : 'group-hover:scale-105 group-hover:grayscale-0'
+                }`} 
+                src={featured[1]?.image} 
+              />
+              {featured[1]?.hoverImage && (
+                <img 
+                  alt="Drop 2 Alternate" 
+                  className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 opacity-0 scale-102 group-hover:opacity-100 group-hover:scale-105 pointer-events-none" 
+                  src={featured[1]?.hoverImage} 
+                />
+              )}
               <div className="absolute bottom-6 left-6 z-20">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[1]?.name}</h3>
                 <p className="font-technical-sm text-[10px] text-white/70">₦{featured[1]?.price?.toLocaleString() || ''}</p>
@@ -104,7 +130,20 @@ export const Home = () => {
               to={featured[2]?.id ? `/product/${featured[2].id}` : '/collections'}
               className="group relative overflow-hidden aspect-square border border-outline-variant/30 block cursor-pointer"
             >
-              <img alt="Drop 3" className="w-full h-full object-cover grayscale transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" src={featured[2]?.image} />
+              <img 
+                alt="Drop 3" 
+                className={`w-full h-full object-cover grayscale transition-all duration-700 ${
+                  featured[2]?.hoverImage ? 'group-hover:opacity-0 group-hover:scale-102' : 'group-hover:scale-105 group-hover:grayscale-0'
+                }`} 
+                src={featured[2]?.image} 
+              />
+              {featured[2]?.hoverImage && (
+                <img 
+                  alt="Drop 3 Alternate" 
+                  className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 opacity-0 scale-102 group-hover:opacity-100 group-hover:scale-105 pointer-events-none" 
+                  src={featured[2]?.hoverImage} 
+                />
+              )}
               <div className="absolute bottom-6 left-6 z-20">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[2]?.name}</h3>
                 <p className="font-technical-sm text-[10px] text-white/70">₦{featured[2]?.price?.toLocaleString() || ''}</p>
@@ -126,7 +165,20 @@ export const Home = () => {
             {limited.slice(0, 4).map((item) => (
               <Link key={item.id} to={`/product/${item.id}`} className="flex flex-col gap-6 group">
                 <div className="relative aspect-[3/4] overflow-hidden bg-surface-container border border-outline-variant/10">
-                  <img alt={item.name} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" src={item.image} />
+                  <img 
+                    alt={item.name} 
+                    className={`w-full h-full object-cover grayscale transition-all duration-500 ${
+                      item.hoverImage ? 'group-hover:opacity-0 group-hover:scale-102' : 'group-hover:grayscale-0 group-hover:scale-105'
+                    }`} 
+                    src={item.image} 
+                  />
+                  {item.hoverImage && (
+                    <img 
+                      alt={`${item.name} Alternate`} 
+                      className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 opacity-0 scale-102 group-hover:opacity-100 group-hover:scale-105 pointer-events-none" 
+                      src={item.hoverImage} 
+                    />
+                  )}
                   {item.stock === 0 && (
                     <div className="absolute top-4 right-4">
                       <span className="border border-primary px-3 py-1 font-technical-sm text-[8px] uppercase bg-black text-white">Sold Out</span>

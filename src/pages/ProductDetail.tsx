@@ -60,7 +60,10 @@ Please confirm availability and payment details.`;
     window.open(WHATSAPP_LINK(message), '_blank');
   };
 
-  const images = product.images || [product.image, product.image, product.image];
+  const images = product.images || [
+    product.image,
+    product.hoverImage
+  ].filter(Boolean) as string[];
 
   return (
     <div className="pt-24 pb-32 max-w-7xl mx-auto px-6 md:px-16">
@@ -70,20 +73,25 @@ Please confirm availability and payment details.`;
           <div className="relative aspect-[3/4] bg-brand-charcoal overflow-hidden group">
             <img 
               alt={product.name} 
-              className="w-full h-full object-cover editorial-image-hover" 
+              className="w-full h-full object-cover editorial-image-hover transition-transform duration-700 ease-out" 
               src={images[0]} 
             />
             <div className="absolute bottom-6 left-6 font-technical-sm text-[10px] bg-black/60 backdrop-blur-md px-4 py-2 border border-brand-silver/20 tracking-widest text-primary">
                IMG_01 / PERSPECTIVE_A
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            {images.slice(1).map((img, i) => (
-              <div key={i} className="aspect-[3/4] bg-brand-charcoal overflow-hidden border border-outline-variant/10">
-                <img alt="Detail" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" src={img} />
-              </div>
-            ))}
-          </div>
+          {images.slice(1).length > 0 && (
+            <div className={`grid gap-6 ${images.slice(1).length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+              {images.slice(1).map((img, i) => (
+                <div key={i} className="aspect-[3/4] bg-brand-charcoal overflow-hidden border border-outline-variant/10 relative group">
+                  <img alt="Detail" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 group-hover:scale-105" src={img} />
+                  <div className="absolute bottom-4 left-4 font-technical-sm text-[8px] bg-black/60 backdrop-blur-md px-2 py-1 border border-brand-silver/10 tracking-widest text-primary">
+                    IMG_0{i + 2} / PERSPECTIVE_{String.fromCharCode(66 + i)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info */}
