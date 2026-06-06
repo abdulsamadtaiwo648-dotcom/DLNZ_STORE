@@ -55,6 +55,15 @@ const compressImage = (file: File): Promise<string> => {
   });
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductModalProps) => {
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -125,19 +134,80 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
     setUploadProgress(isHover ? 'hovering' : 'primary');
     try {
-      // 1. Try Firebase Storage upload
+      // Convert to Base64 payload
+      const base64Data = await fileToBase64(file);
+
+      console.log('Attempting Cloudinary backend proxy upload...');
+      const response = await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: base64Data,
+          publicId: `${formData.sku || 'temp'}_${isHover ? 'hover' : 'main'}_${Date.now()}`
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.url) {
+          console.log('Successfully uploaded to Cloudinary via backend proxy!');
+          setFormData(prev => ({
+            ...prev,
+            [isHover ? 'hoverImage' : 'image']: data.url
+          }));
+          return;
+        }
+      } else {
+        const errText = await response.text();
+        console.warn('Backend proxy Cloudinary upload failed:', errText);
+      }
+
+      // Fallback 1: Client Direct Cloudinary Unsigned Upload (prioritize env, fall back to user's config dlav10tgx / DLNZ-STORE)
+      const cloudName = (import.meta as any).env.VITE_CLOUDINARY_CLOUD_NAME || 'dlav10tgx';
+      const uploadPreset = (import.meta as any).env.VITE_CLOUDINARY_UPLOAD_PRESET || 'DLNZ-STORE';
+      if (cloudName && uploadPreset) {
+        console.log('Attempting direct client-side Cloudinary unsigned upload...');
+        const clFormData = new FormData();
+        clFormData.append('file', file);
+        clFormData.append('upload_preset', uploadPreset);
+
+        const clRes = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+          method: 'POST',
+          body: clFormData
+        });
+
+        if (clRes.ok) {
+          const clData = await clRes.json();
+          if (clData.secure_url) {
+            console.log('Successfully uploaded directly to Cloudinary client-side!');
+            setFormData(prev => ({
+              ...prev,
+              [isHover ? 'hoverImage' : 'image']: clData.secure_url
+            }));
+            return;
+          }
+        } else {
+          console.warn('Direct Cloudinary upload failed:', await clRes.text());
+        }
+      }
+
+      // Fallback 2: Firebase Storage
+      console.log('Attempting Firebase Storage upload as fallback...');
       const path = `products/${formData.sku || 'temp'}_${isHover ? 'hover' : 'main'}_${file.name}`;
       const storageRef = ref(storage, path);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
       
+      console.log('Successfully uploaded fallback image to Firebase Storage!');
       setFormData(prev => ({
         ...prev,
         [isHover ? 'hoverImage' : 'image']: downloadURL
       }));
     } catch (err) {
-      console.warn('Firebase Storage upload failed, falling back to base64 compression:', err);
-      // 2. Fallback to optimized Base64
+      console.error('All remote upload streams and storage failed, falling back to base64 compression:', err);
+      // Fallback 3: base64 local compression
       const base64 = await compressImage(file);
       if (base64) {
         setFormData(prev => ({
@@ -149,6 +219,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
       setUploadProgress('');
     }
   };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

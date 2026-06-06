@@ -4,17 +4,29 @@ import { getFirestore, doc, getDocFromCache, getDocFromServer } from 'firebase/f
 import { getStorage } from 'firebase/storage';
 import firebaseConfig from '../../firebase-applet-config.json';
 
-// Load configurations, prioritizing custom environment variables (sensitive keys never exposed without VITE_ prefix unless specified)
+// Load configurations, prioritizing firebase-applet-config.json, with support for valid custom env variable overrides
 const metaEnv = (import.meta as any).env || {};
-const resolvedConfig = {
-  apiKey: (metaEnv.VITE_FIREBASE_API_KEY as string) || firebaseConfig.apiKey,
-  authDomain: (metaEnv.VITE_FIREBASE_AUTH_DOMAIN as string) || firebaseConfig.authDomain,
-  projectId: (metaEnv.VITE_FIREBASE_PROJECT_ID as string) || firebaseConfig.projectId,
-  storageBucket: (metaEnv.VITE_FIREBASE_STORAGE_BUCKET as string) || firebaseConfig.storageBucket,
-  messagingSenderId: (metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID as string) || firebaseConfig.messagingSenderId,
-  appId: (metaEnv.VITE_FIREBASE_APP_ID as string) || firebaseConfig.appId,
-  firestoreDatabaseId: (metaEnv.VITE_FIREBASE_FIRESTORE_DATABASE_ID as string) || firebaseConfig.firestoreDatabaseId,
+
+const isValidConfigValue = (val: any): boolean => {
+  if (typeof val !== 'string') return false;
+  const trimmed = val.trim();
+  if (trimmed === '' || trimmed === 'undefined' || trimmed === 'null') return false;
+  if (trimmed.toLowerCase().includes('placeholder')) return false;
+  if (trimmed.startsWith('YOUR_') || trimmed.startsWith('MY_')) return false;
+  return true;
 };
+
+const resolvedConfig = {
+  apiKey: isValidConfigValue(metaEnv.VITE_FIREBASE_API_KEY) ? (metaEnv.VITE_FIREBASE_API_KEY as string) : firebaseConfig.apiKey,
+  authDomain: isValidConfigValue(metaEnv.VITE_FIREBASE_AUTH_DOMAIN) ? (metaEnv.VITE_FIREBASE_AUTH_DOMAIN as string) : firebaseConfig.authDomain,
+  projectId: isValidConfigValue(metaEnv.VITE_FIREBASE_PROJECT_ID) ? (metaEnv.VITE_FIREBASE_PROJECT_ID as string) : firebaseConfig.projectId,
+  storageBucket: isValidConfigValue(metaEnv.VITE_FIREBASE_STORAGE_BUCKET) ? (metaEnv.VITE_FIREBASE_STORAGE_BUCKET as string) : firebaseConfig.storageBucket,
+  messagingSenderId: isValidConfigValue(metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID) ? (metaEnv.VITE_FIREBASE_MESSAGING_SENDER_ID as string) : firebaseConfig.messagingSenderId,
+  appId: isValidConfigValue(metaEnv.VITE_FIREBASE_APP_ID) ? (metaEnv.VITE_FIREBASE_APP_ID as string) : firebaseConfig.appId,
+  firestoreDatabaseId: isValidConfigValue(metaEnv.VITE_FIREBASE_FIRESTORE_DATABASE_ID) ? (metaEnv.VITE_FIREBASE_FIRESTORE_DATABASE_ID as string) : firebaseConfig.firestoreDatabaseId,
+};
+
+console.log('Firebase initialized with projectId:', resolvedConfig.projectId);
 
 const app = initializeApp(resolvedConfig);
 

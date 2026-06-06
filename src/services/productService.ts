@@ -41,13 +41,14 @@ export const productService = {
         })) as Product[];
 
         const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
-        localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
-        return productsToUse;
+        const finalProducts = productsToUse.length > 0 ? productsToUse : localProducts;
+        localStorage.setItem('dlnz-products', JSON.stringify(finalProducts));
+        return finalProducts;
       } catch (fsError) {
         console.warn('Firestore fallback fetch failed, using local cache:', fsError);
         const customLocal = localStorage.getItem('dlnz-products');
         if (customLocal) return JSON.parse(customLocal);
-        return [];
+        return localProducts;
       }
     }
   },
@@ -65,16 +66,17 @@ export const productService = {
       })) as Product[];
 
       const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
+      const finalProducts = productsToUse.length > 0 ? productsToUse : localProducts;
       
-      localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
-      onUpdate(productsToUse);
+      localStorage.setItem('dlnz-products', JSON.stringify(finalProducts));
+      onUpdate(finalProducts);
     }, (error) => {
       console.warn('Firestore subscription failed, falling back to local cache/defaults:', error);
       const customLocal = localStorage.getItem('dlnz-products');
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate([]);
+        onUpdate(localProducts);
       }
       if (onError) {
         onError(error);
