@@ -35,14 +35,10 @@ export const orderService = {
         const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
         const querySnapshot = await getDocs(q);
         
-        let dbOrders = querySnapshot.docs.map(doc => ({
+        const dbOrders = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as Order[];
-
-        if (dbOrders.length === 0) {
-          dbOrders = localOrders;
-        }
 
         localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
         return dbOrders;
@@ -59,14 +55,10 @@ export const orderService = {
     const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
     
     return onSnapshot(q, (querySnapshot) => {
-      let dbOrders = querySnapshot.docs.map(doc => ({
+      const dbOrders = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Order[];
-
-      if (dbOrders.length === 0) {
-        dbOrders = localOrders;
-      }
 
       localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
       onUpdate(dbOrders);

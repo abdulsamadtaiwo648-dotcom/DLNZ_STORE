@@ -86,6 +86,32 @@ async function startServer() {
     return doc(collection(db, collectionName)).id;
   }
 
+  // Base auto-seeding logic to populate database on startup
+  try {
+    const metaDocs = await getDocs(collection(db, 'metadata'));
+    if (metaDocs.empty) {
+      console.log('No metadata collection found. Triggering first-run database auto-seed...');
+      for (const product of localProducts) {
+        const { id, ...data } = product;
+        await dbSetDoc('products', id, { ...data, updatedAt: new Date().toISOString() }, true);
+      }
+      for (const order of localOrders) {
+        const { id, ...data } = order;
+        await dbSetDoc('orders', id, {
+          ...data,
+          userId: 'seeded-system-user',
+          createdAt: new Date().toISOString()
+        }, true);
+      }
+      await dbSetDoc('metadata', 'seed_status', { seeded: true });
+      console.log('Auto-seed completed successfully!');
+    } else {
+      console.log('Database already initialized. Skipping auto-seed.');
+    }
+  } catch (err) {
+    console.warn('Unable to perform auto-seed on startup (non-blocking):', err);
+  }
+
   // API Admin Routes
   app.post('/api/admin/upload', async (req, res) => {
     try {
@@ -122,10 +148,7 @@ async function startServer() {
 
   app.get('/api/admin/products', async (req, res) => {
     try {
-      let dbProducts = await dbGetDocs('products', 'name');
-      if (dbProducts.length === 0) {
-        dbProducts = localProducts as any[];
-      }
+      const dbProducts = await dbGetDocs('products', 'name');
       const productsToUse = [...dbProducts].sort((a: any, b: any) => a.name.localeCompare(b.name));
       res.json(productsToUse);
     } catch (err: any) {
@@ -180,10 +203,7 @@ async function startServer() {
 
   app.get('/api/admin/orders', async (req, res) => {
     try {
-      let dbOrders = await dbGetDocs('orders', 'date', true);
-      if (dbOrders.length === 0) {
-        dbOrders = localOrders as any[];
-      }
+      const dbOrders = await dbGetDocs('orders', 'date', true);
       res.json(dbOrders);
     } catch (err: any) {
       console.error('Error in GET /api/admin/orders:', err);
