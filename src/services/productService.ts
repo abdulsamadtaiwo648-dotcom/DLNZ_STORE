@@ -40,10 +40,6 @@ export const productService = {
           ...doc.data()
         })) as Product[];
 
-        if (dbProducts.length === 0) {
-          dbProducts = localProducts;
-        }
-
         const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
         localStorage.setItem('dlnz-products', JSON.stringify(productsToUse));
         return productsToUse;
@@ -51,7 +47,7 @@ export const productService = {
         console.warn('Firestore fallback fetch failed, using local cache:', fsError);
         const customLocal = localStorage.getItem('dlnz-products');
         if (customLocal) return JSON.parse(customLocal);
-        return localProducts;
+        return [];
       }
     }
   },
@@ -59,15 +55,14 @@ export const productService = {
   subscribeToProducts(onUpdate: (products: Product[]) => void, onError?: (error: unknown) => void): () => void {
     const q = query(collection(db, COLLECTION_NAME), orderBy('name'));
     
+    // Quick REST backdrop sync
+    this.getAllProducts().then(onUpdate).catch(() => {});
+
     return onSnapshot(q, (querySnapshot) => {
       let dbProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
-
-      if (dbProducts.length === 0) {
-        dbProducts = localProducts;
-      }
 
       const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
       
@@ -79,7 +74,7 @@ export const productService = {
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate(localProducts);
+        onUpdate([]);
       }
       if (onError) {
         onError(error);

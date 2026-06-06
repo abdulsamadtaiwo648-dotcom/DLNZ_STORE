@@ -617,7 +617,14 @@ export const AdminDashboard = () => {
         isOpen={isModalOpen}
         product={selectedProduct}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={() => {}}
+        onSuccess={async () => {
+          try {
+            const updatedProducts = await productService.getAllProducts().catch(() => []);
+            setProducts(updatedProducts);
+          } catch (err) {
+            console.error('Failed to sync updated products:', err);
+          }
+        }}
       />
     </div>
   );

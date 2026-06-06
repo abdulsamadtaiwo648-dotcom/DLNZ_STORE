@@ -93,14 +93,14 @@ export const AdminSidebar = () => {
 
       {/* Mobile Sidebar Drawer */}
       <aside className={cn(
-        "fixed left-0 top-0 h-full w-72 bg-surface-container-lowest border-r border-outline-variant/30 flex flex-col p-8 gap-10 z-[60] lg:hidden transition-transform duration-300 ease-in-out",
+        "fixed left-0 top-0 h-full w-72 bg-surface-container-lowest/80 backdrop-blur-md border-r border-outline-variant/30 flex flex-col p-8 gap-10 z-[60] lg:hidden transition-transform duration-300 ease-in-out",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <SidebarContent />
       </aside>
 
       {/* Desktop Persistent Sidebar */}
-      <aside className="h-screen sticky top-0 w-72 bg-surface-container-lowest border-r border-outline-variant/30 hidden lg:flex flex-col p-8 gap-10 z-40 shrink-0 overflow-y-auto scrollbar-hide">
+      <aside className="h-screen sticky top-0 w-72 bg-surface-container-lowest/80 backdrop-blur-md border-r border-outline-variant/30 hidden lg:flex flex-col p-8 gap-10 z-40 shrink-0 overflow-y-auto scrollbar-hide">
         <SidebarContent />
       </aside>
     </>
