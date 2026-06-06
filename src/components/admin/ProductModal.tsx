@@ -67,6 +67,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductModalProps) => {
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [formData, setFormData] = useState<Omit<Product, 'id'> & { featured?: boolean; limited?: boolean }>({
     name: '',
     price: 0,
@@ -90,6 +91,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
   useEffect(() => {
     setIsSaved(false);
+    setSaveError(null);
     if (product) {
       const { id, ...rest } = product;
       setFormData({
@@ -223,8 +225,9 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaveError(null);
     if (!formData.image) {
-      alert('Please set a primary product image before saving.');
+      setSaveError('Please select or specify a primary product image before attempting to commit save.');
       return;
     }
     setLoading(true);
@@ -239,8 +242,9 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Save failed:', error);
+      setSaveError(error?.message || String(error) || 'Save operation failed. Please verify configurations and Cloudinary settings.');
     } finally {
       setLoading(false);
     }
@@ -292,6 +296,13 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
             <X className="w-6 h-6" />
           </button>
         </div>
+
+        {saveError && (
+          <div className="mx-8 mt-6 p-4 bg-brand-red/10 border border-brand-red/40 text-xs text-brand-red font-mono flex flex-col gap-1 rounded-sm">
+            <span className="font-bold uppercase tracking-wider text-[10px]">⚠️ ACTION EXCEPTION:</span>
+            <p>{saveError}</p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="p-8 grid grid-cols-1 md:grid-cols-2 gap-10">
           <div className="space-y-8">
