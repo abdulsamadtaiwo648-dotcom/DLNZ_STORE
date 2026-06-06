@@ -35,6 +35,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Checkout status
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
+  const [orderSuccessTracking, setOrderSuccessTracking] = useState<string | null>(null);
 
   // Load cart from localStorage
   useEffect(() => {
@@ -160,6 +161,7 @@ Please advise on carrier scheduling and completion of purchase.`;
 
     setIsSubmittingOrder(true);
     try {
+      const trackingCode = `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`;
       const orderId = await orderService.createOrder({
         customerName,
         customerEmail,
@@ -167,12 +169,13 @@ Please advise on carrier scheduling and completion of purchase.`;
         amount: subtotal,
         status: 'Processing',
         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`
+        tracking: trackingCode
       });
 
       if (orderId) {
         // Order succeeded!
         setOrderSuccessId(orderId);
+        setOrderSuccessTracking(trackingCode);
         clearCart();
       } else {
         alert('Verification system rejected order creation. Please verify network.');
@@ -255,11 +258,17 @@ Please advise on carrier scheduling and completion of purchase.`;
 
                     <div className="w-full bg-brand-charcoal border border-outline-variant/30 p-6 space-y-4 text-left">
                       <div className="flex justify-between border-b border-white/10 pb-3">
-                        <span className="font-technical-sm text-[10px] opacity-40 uppercase">Tracking ID</span>
+                        <span className="font-technical-sm text-[10px] opacity-40 uppercase">Order ID</span>
                         <span className="font-technical-sm text-[10px] text-brand-red font-bold">{orderSuccessId}</span>
                       </div>
+                      {orderSuccessTracking && (
+                        <div className="flex justify-between border-b border-white/10 pb-3">
+                          <span className="font-technical-sm text-[10px] opacity-40 uppercase">Tracking Code</span>
+                          <span className="font-technical-sm text-[10px] text-primary font-mono select-all font-bold">{orderSuccessTracking}</span>
+                        </div>
+                      )}
                       <p className="font-body text-xs opacity-70 leading-relaxed">
-                        Your secure digital voucher is registered in our network. You can track status immediately on the tracking page.
+                        Your secure digital voucher is registered in our network. Use your custom Order ID or the Tracking Code to monitor dynamic transit status on our tracking page.
                       </p>
                     </div>
 

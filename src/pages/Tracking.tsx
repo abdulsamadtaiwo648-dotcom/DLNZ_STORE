@@ -5,13 +5,36 @@ import { cn } from '../lib/utils';
 import { orderService } from '../services/orderService';
 import { Order } from '../types';
 import { WHATSAPP_LINK } from '../constants';
+import { useAuth } from '../components/FirebaseProvider';
 
 export const Tracking = () => {
+  const { user, setIsAuthModalOpen } = useAuth();
   const [orderIdInput, setOrderIdInput] = useState('');
   const [activeOrderId, setActiveOrderId] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [userOrders, setUserOrders] = useState<Order[]>([]);
+  const [fetchingUserOrders, setFetchingUserOrders] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setUserOrders([]);
+      return;
+    }
+    const fetchUserOrders = async () => {
+      setFetchingUserOrders(true);
+      try {
+        const list = await orderService.getUserOrders(user.uid);
+        setUserOrders(list);
+      } catch (err) {
+        console.error('Error fetching user orders:', err);
+      } finally {
+        setFetchingUserOrders(false);
+      }
+    };
+    fetchUserOrders();
+  }, [user, activeOrderId]);
 
   useEffect(() => {
     if (!activeOrderId) {
@@ -235,6 +258,105 @@ export const Tracking = () => {
             Please enter your unique Order ID in the query panel above to track your order.
           </p>
         </div>
+      )}
+
+      {/* If logged in, show User Orders History at the bottom */}
+      {user ? (
+        <section className="mt-20 border-t border-outline-variant/35 pt-16">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h2 className="font-display text-2xl md:text-3xl uppercase tracking-tight">Your Order Vault</h2>
+              <p className="font-technical-sm text-[10px] text-on-surface-variant opacity-60 uppercase mt-1 tracking-widest">
+                AUTOMATICALLY RETRIEVED DIGITAL REGISTER FOR {user.email}
+              </p>
+            </div>
+            <span className="font-technical text-xs text-brand-red font-bold uppercase tracking-widest select-none bg-brand-red/10 border border-brand-red/20 px-3 py-1">
+              OBSIDIAN LOYALTY STATUS
+            </span>
+          </div>
+
+          {fetchingUserOrders ? (
+            <div className="py-12 flex justify-center items-center">
+              <Loader2 className="w-8 h-8 text-brand-red animate-spin mr-3" />
+              <span className="font-technical-sm text-xs opacity-60 uppercase tracking-widest">QUERYING DEEP STORAGE LEDGER...</span>
+            </div>
+          ) : userOrders.length === 0 ? (
+            <div className="border border-outline-variant/20 bg-brand-charcoal p-12 text-center max-w-2xl mx-auto flex flex-col items-center justify-center">
+              <p className="font-display text-lg uppercase mb-2">No Registered Orders</p>
+              <p className="font-technical-sm text-[10px] opacity-40 uppercase max-w-xs tracking-widest leading-relaxed">
+                You have not registered any digital client orders. Explore our current collections to acquire seasonal pieces.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto border border-outline-variant/30 bg-[#070707] rounded-none custom-scrollbar">
+              <table className="w-full text-left border-collapse font-technical-sm text-[11px] uppercase tracking-wider min-w-[650px]">
+                <thead>
+                  <tr className="border-b border-outline-variant/30 bg-brand-charcoal opacity-60 text-primary-light">
+                    <th className="p-4 md:p-5 font-bold">Order ID</th>
+                    <th className="p-4 md:p-5 font-bold">Creation Date</th>
+                    <th className="p-4 md:p-5 font-bold">Tracking Code</th>
+                    <th className="p-4 md:p-5 font-bold">Value</th>
+                    <th className="p-4 md:p-5 font-bold">Carrier Dispatch</th>
+                    <th className="p-4 md:p-5 font-bold text-center">Operation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/20">
+                  {userOrders.map((itm) => (
+                    <tr 
+                      key={itm.id} 
+                      className={cn(
+                        "hover:bg-brand-charcoal/30 transition-colors",
+                        activeOrderId === itm.id ? "bg-brand-red/5 text-brand-red" : "text-primary"
+                      )}
+                    >
+                      <td className="p-4 md:p-5 font-mono font-bold">{itm.id}</td>
+                      <td className="p-4 md:p-5 opacity-70">{itm.date}</td>
+                      <td className="p-4 md:p-5 font-mono text-brand-ring hover:text-brand-red transition-colors select-all font-semibold" title="Copy tracking code">
+                        {itm.tracking || 'TRK-PENDING'}
+                      </td>
+                      <td className="p-4 md:p-5 font-bold text-white">₦{itm.amount.toLocaleString()}</td>
+                      <td className="p-4 md:p-5">
+                        <span className={cn(
+                          "px-2.5 py-1 text-[9px] font-bold tracking-widest font-technical",
+                          itm.status === 'Delivered' ? "bg-green-500/10 text-green-400 border border-green-500/20" :
+                          itm.status === 'Shipped' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
+                          itm.status === 'Hold' ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20" :
+                          "bg-brand-red/10 text-brand-red border border-brand-red/20"
+                        )}>
+                          {itm.status || 'Processing'}
+                        </span>
+                      </td>
+                      <td className="p-4 md:p-5 text-center">
+                        <button
+                          onClick={() => {
+                            setActiveOrderId(itm.id);
+                            setOrderIdInput(itm.id);
+                            window.scrollTo({ top: 100, behavior: 'smooth' });
+                          }}
+                          className="bg-primary text-black hover:bg-brand-red hover:text-white px-4 py-2 font-technical-sm font-bold text-[9px] uppercase tracking-widest transition-all cursor-pointer"
+                        >
+                          Locate Piece
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="mt-20 border-t border-outline-variant/35 pt-16 text-center max-w-xl mx-auto">
+          <p className="font-technical-sm text-[10px] text-on-surface-variant opacity-60 uppercase mb-4 tracking-widest">
+            HAVE AN ACCOUNT WITH SYSTEM SECURED PROFILE?
+          </p>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="border border-outline-variant/30 hover:bg-white hover:text-black font-technical-sm text-[10px] uppercase px-8 py-3.5 tracking-widest transition-all cursor-pointer"
+          >
+            Sign In to Fetch Order Vault
+          </button>
+        </section>
       )}
     </div>
   );

@@ -96,16 +96,30 @@ export const orderService = {
 
   async getOrderById(id: string): Promise<Order | null> {
     try {
+      // 1. Try finding by document id
       const docRef = doc(db, COLLECTION_NAME, id);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         return { id: docSnap.id, ...docSnap.data() } as Order;
       }
+
+      // 2. Try querying by tracking field
+      const q = query(collection(db, COLLECTION_NAME), where('tracking', '==', id));
+      const qSnap = await getDocs(q);
+      if (!qSnap.empty) {
+        const d = qSnap.docs[0];
+        return { id: d.id, ...d.data() } as Order;
+      }
+
       const all = await this.getAllOrders();
-      return all.find(o => o.id === id) || null;
+      return all.find(o => o.id === id || o.tracking === id) || null;
     } catch (error) {
-      const all = await this.getAllOrders();
-      return all.find(o => o.id === id) || null;
+      try {
+        const all = await this.getAllOrders();
+        return all.find(o => o.id === id || o.tracking === id) || null;
+      } catch (inner) {
+        return null;
+      }
     }
   },
 
