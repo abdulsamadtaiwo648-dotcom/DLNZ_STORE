@@ -15,6 +15,7 @@ import {
 import { db } from '../lib/firebase';
 import { Order } from '../types';
 import { OperationType, handleFirestoreError } from '../components/FirebaseProvider';
+import { orders as localOrders } from '../data';
 
 const COLLECTION_NAME = 'orders';
 
@@ -23,22 +24,23 @@ export const orderService = {
     try {
       const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
       const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        const customLocal = localStorage.getItem('dlnz-orders');
-        if (customLocal) return JSON.parse(customLocal);
-        return [];
-      }
-      const data = querySnapshot.docs.map(doc => ({
+      
+      let dbOrders = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Order[];
-      localStorage.setItem('dlnz-orders', JSON.stringify(data));
-      return data;
+
+      if (dbOrders.length === 0) {
+        dbOrders = localOrders;
+      }
+
+      localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
+      return dbOrders;
     } catch (error) {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-orders');
       if (customLocal) return JSON.parse(customLocal);
-      return [];
+      return localOrders;
     }
   },
 
@@ -46,22 +48,24 @@ export const orderService = {
     const q = query(collection(db, COLLECTION_NAME), orderBy('date', 'desc'));
     
     return onSnapshot(q, (querySnapshot) => {
-      const dbOrders = querySnapshot.docs.map(doc => ({
+      let dbOrders = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Order[];
 
-      const ordersToUse = dbOrders;
-      
-      localStorage.setItem('dlnz-orders', JSON.stringify(ordersToUse));
-      onUpdate(ordersToUse);
+      if (dbOrders.length === 0) {
+        dbOrders = localOrders;
+      }
+
+      localStorage.setItem('dlnz-orders', JSON.stringify(dbOrders));
+      onUpdate(dbOrders);
     }, (error) => {
       console.warn('Firestore orders subscription failed, falling back to local cache/defaults:', error);
       const customLocal = localStorage.getItem('dlnz-orders');
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate([]);
+        onUpdate(localOrders);
       }
       if (onError) {
         onError(error);

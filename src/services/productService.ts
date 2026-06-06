@@ -15,6 +15,7 @@ import {
 import { db } from '../lib/firebase';
 import { Product } from '../types';
 import { OperationType, handleFirestoreError } from '../components/FirebaseProvider';
+import { products as localProducts } from '../data';
 
 const COLLECTION_NAME = 'products';
 
@@ -24,10 +25,14 @@ export const productService = {
       const q = query(collection(db, COLLECTION_NAME), orderBy('name'));
       const querySnapshot = await getDocs(q);
       
-      const dbProducts = querySnapshot.docs.map(doc => ({
+      let dbProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
+
+      if (dbProducts.length === 0) {
+        dbProducts = localProducts;
+      }
 
       // Sort alphabetically by name
       const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
@@ -38,7 +43,7 @@ export const productService = {
       console.warn('Firestore fetch failed, using local cache:', error);
       const customLocal = localStorage.getItem('dlnz-products');
       if (customLocal) return JSON.parse(customLocal);
-      return [];
+      return localProducts;
     }
   },
 
@@ -46,10 +51,14 @@ export const productService = {
     const q = query(collection(db, COLLECTION_NAME), orderBy('name'));
     
     return onSnapshot(q, (querySnapshot) => {
-      const dbProducts = querySnapshot.docs.map(doc => ({
+      let dbProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Product[];
+
+      if (dbProducts.length === 0) {
+        dbProducts = localProducts;
+      }
 
       const productsToUse = [...dbProducts].sort((a, b) => a.name.localeCompare(b.name));
       
@@ -61,7 +70,7 @@ export const productService = {
       if (customLocal) {
         onUpdate(JSON.parse(customLocal));
       } else {
-        onUpdate([]);
+        onUpdate(localProducts);
       }
       if (onError) {
         onError(error);

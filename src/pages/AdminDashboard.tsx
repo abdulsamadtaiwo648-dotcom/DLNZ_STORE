@@ -127,12 +127,16 @@ const InventoryManagement = ({
   products, 
   onNewProduct, 
   onEditProduct, 
-  onDeleteProduct 
+  onDeleteProduct,
+  onSeed,
+  seedingLoading
 }: { 
   products: Product[], 
   onNewProduct: () => void,
   onEditProduct: (p: Product) => void,
-  onDeleteProduct: (p: Product) => void
+  onDeleteProduct: (p: Product) => void,
+  onSeed: () => void,
+  seedingLoading: boolean
 }) => (
   <>
     {/* Sub-Header */}
@@ -142,13 +146,23 @@ const InventoryManagement = ({
           <span className="font-technical-sm text-[10px] text-primary mb-3 block tracking-widest opacity-60">MASTER CATALOG / SECTOR: INVENTORY</span>
           <h1 className="font-display text-4xl md:text-8xl uppercase leading-none">Products</h1>
         </div>
-        <button 
-          onClick={onNewProduct}
-          className="bg-brand-red text-white px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:brightness-110 w-full lg:w-auto justify-center"
-        >
-           <Plus className="w-4 h-4" />
-           New Product
-        </button>
+        <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+          <button 
+            onClick={onSeed}
+            disabled={seedingLoading}
+            className="border border-outline-variant/60 text-primary px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-3 active:scale-95 transition-all hover:bg-white hover:text-black w-full sm:w-auto disabled:opacity-40 cursor-pointer"
+          >
+             <Database className="w-4 h-4 text-brand-red animate-pulse" />
+             {seedingLoading ? 'SEEDING LIVE DATABASE...' : 'SEED LIVE DB'}
+          </button>
+          <button 
+            onClick={onNewProduct}
+            className="bg-brand-red text-white px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:brightness-110 w-full sm:w-auto justify-center cursor-pointer"
+          >
+             <Plus className="w-4 h-4" />
+             New Product
+          </button>
+        </div>
       </div>
     </section>
 
@@ -332,6 +346,23 @@ export const AdminDashboard = () => {
   const handleDeleteProduct = async (product: Product) => {
     if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
       await productService.deleteProduct(product.id);
+    }
+  };
+
+  const [seedingLoading, setSeedingLoading] = useState(false);
+  const handleSeedDatabase = async () => {
+    if (window.confirm('Are you sure you want to seed the default luxury items as live Firebase entries? This will register products and initial master orders in real-time.')) {
+      setSeedingLoading(true);
+      try {
+        const { seedDatabase } = await import('../lib/seed');
+        await seedDatabase();
+        alert('Database populated with live DLNZ inventory and order logs successfully!');
+      } catch (err: any) {
+        console.error('Seeding error:', err);
+        alert(`Seeding exception: ${err?.message || err}`);
+      } finally {
+        setSeedingLoading(false);
+      }
     }
   };
 
@@ -569,6 +600,8 @@ export const AdminDashboard = () => {
               onNewProduct={() => { setSelectedProduct(null); setIsModalOpen(true); }}
               onEditProduct={(p) => { setSelectedProduct(p); setIsModalOpen(true); }}
               onDeleteProduct={handleDeleteProduct}
+              onSeed={handleSeedDatabase}
+              seedingLoading={seedingLoading}
             />
           } />
           <Route path="orders" element={<OrdersManagement orders={orders} onUpdateStatus={handleUpdateOrderStatus} />} />
