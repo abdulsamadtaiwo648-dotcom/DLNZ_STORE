@@ -75,6 +75,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
     subcategory: '',
     image: '',
     hoverImage: '',
+    images: [],
     stock: 0,
     sku: '',
     description: '',
@@ -85,13 +86,18 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
     limited: false
   });
 
-  const [imageTab, setImageTab] = useState<'primary' | 'hover'>('primary');
+  const [colorsInput, setColorsInput] = useState('');
+  const [detailsInput, setDetailsInput] = useState('');
+  const [tempUrl, setTempUrl] = useState('');
+
+  const [imageTab, setImageTab] = useState<'primary' | 'hover' | 'gallery'>('primary');
   const [uploadMode, setUploadMode] = useState<'file' | 'link'>('file');
   const [uploadProgress, setUploadProgress] = useState<string>('');
 
   useEffect(() => {
     setIsSaved(false);
     setSaveError(null);
+    setTempUrl('');
     if (product) {
       const { id, ...rest } = product;
       setFormData({
@@ -101,6 +107,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         subcategory: rest.subcategory || '',
         image: rest.image || '',
         hoverImage: rest.hoverImage || '',
+        images: rest.images || [],
         stock: rest.stock || 0,
         sku: rest.sku || '',
         description: rest.description || '',
@@ -110,6 +117,8 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         featured: rest.featured || false,
         limited: rest.limited || false
       });
+      setColorsInput(rest.colors?.join(', ') || '');
+      setDetailsInput(rest.details?.join('\n') || '');
     } else {
       setFormData({
         name: '',
@@ -118,6 +127,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         subcategory: '',
         image: '',
         hoverImage: '',
+        images: [],
         stock: 0,
         sku: `SKU-${Math.floor(Math.random() * 10000)}`,
         description: '',
@@ -127,14 +137,16 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         featured: false,
         limited: false
       });
+      setColorsInput('');
+      setDetailsInput('');
     }
   }, [product, isOpen]);
 
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, isHover = false) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>, target: 'primary' | 'hover' | 'gallery') => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setUploadProgress(isHover ? 'hovering' : 'primary');
+    setUploadProgress(target);
     try {
       // Convert to Base64 payload
       const base64Data = await fileToBase64(file);
@@ -147,7 +159,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         },
         body: JSON.stringify({
           image: base64Data,
-          publicId: `${formData.sku || 'temp'}_${isHover ? 'hover' : 'main'}_${Date.now()}`
+          publicId: `${formData.sku || 'temp'}_${target}_${Date.now()}`
         }),
       });
 
@@ -155,10 +167,18 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
         const data = await response.json();
         if (data.url) {
           console.log('Successfully uploaded to Cloudinary via backend proxy!');
-          setFormData(prev => ({
-            ...prev,
-            [isHover ? 'hoverImage' : 'image']: data.url
-          }));
+          setFormData(prev => {
+            if (target === 'gallery') {
+              return {
+                ...prev,
+                images: [...(prev.images || []), data.url]
+              };
+            }
+            return {
+              ...prev,
+              [target === 'hover' ? 'hoverImage' : 'image']: data.url
+            };
+          });
           return;
         }
       } else {
@@ -184,10 +204,18 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
           const clData = await clRes.json();
           if (clData.secure_url) {
             console.log('Successfully uploaded directly to Cloudinary client-side!');
-            setFormData(prev => ({
-              ...prev,
-              [isHover ? 'hoverImage' : 'image']: clData.secure_url
-            }));
+            setFormData(prev => {
+              if (target === 'gallery') {
+                return {
+                  ...prev,
+                  images: [...(prev.images || []), clData.secure_url]
+                };
+              }
+              return {
+                ...prev,
+                [target === 'hover' ? 'hoverImage' : 'image']: clData.secure_url
+              };
+            });
             return;
           }
         } else {
@@ -197,25 +225,41 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
       // Fallback 2: Firebase Storage
       console.log('Attempting Firebase Storage upload as fallback...');
-      const path = `products/${formData.sku || 'temp'}_${isHover ? 'hover' : 'main'}_${file.name}`;
+      const path = `products/${formData.sku || 'temp'}_${target}_${file.name}`;
       const storageRef = ref(storage, path);
       const snapshot = await uploadBytes(storageRef, file);
       const downloadURL = await getDownloadURL(snapshot.ref);
       
       console.log('Successfully uploaded fallback image to Firebase Storage!');
-      setFormData(prev => ({
-        ...prev,
-        [isHover ? 'hoverImage' : 'image']: downloadURL
-      }));
+      setFormData(prev => {
+        if (target === 'gallery') {
+          return {
+            ...prev,
+            images: [...(prev.images || []), downloadURL]
+          };
+        }
+        return {
+          ...prev,
+          [target === 'hover' ? 'hoverImage' : 'image']: downloadURL
+        };
+      });
     } catch (err) {
       console.error('All remote upload streams and storage failed, falling back to base64 compression:', err);
       // Fallback 3: base64 local compression
       const base64 = await compressImage(file);
       if (base64) {
-        setFormData(prev => ({
-          ...prev,
-          [isHover ? 'hoverImage' : 'image']: base64
-        }));
+        setFormData(prev => {
+          if (target === 'gallery') {
+            return {
+              ...prev,
+              images: [...(prev.images || []), base64]
+            };
+          }
+          return {
+            ...prev,
+            [target === 'hover' ? 'hoverImage' : 'image']: base64
+          };
+        });
       }
     } finally {
       setUploadProgress('');
@@ -417,32 +461,40 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
             {/* Colors (Comma-separated) */}
             <div className="space-y-2">
-              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block">
+              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block font-bold">
                 Finish Colors (Comma Separated)
               </label>
               <input
                 className="w-full bg-surface-container border border-outline-variant/30 p-4 font-technical-sm text-xs focus:border-brand-red outline-none transition-colors"
-                value={formData.colors?.join(', ') || ''}
-                onChange={e => setFormData({ 
-                  ...formData, 
-                  colors: e.target.value.split(',').map(s => s.trim()).filter(Boolean)
-                })}
+                value={colorsInput}
+                onChange={e => {
+                  const val = e.target.value;
+                  colorsInput !== val && setColorsInput(val);
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    colors: val.split(',').map(s => s.trim()).filter(Boolean)
+                  }));
+                }}
                 placeholder="E.G. Black, White, #8B0000"
               />
             </div>
 
             {/* Core Details (Line-separated) */}
             <div className="space-y-2">
-              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block">
+              <label className="font-technical-sm text-[10px] uppercase opacity-40 tracking-widest block font-bold">
                 Bullet Details (One Per Line)
               </label>
               <textarea
                 className="w-full bg-surface-container border border-outline-variant/30 p-4 font-body text-sm min-h-[100px] focus:border-brand-red outline-none transition-colors"
-                value={formData.details?.join('\n') || ''}
-                onChange={e => setFormData({ 
-                  ...formData, 
-                  details: e.target.value.split('\n').map(s => s.trim()).filter(Boolean)
-                })}
+                value={detailsInput}
+                onChange={e => {
+                  const val = e.target.value;
+                  detailsInput !== val && setDetailsInput(val);
+                  setFormData(prev => ({ 
+                    ...prev, 
+                    details: val.split('\n').map(s => s.trim()).filter(Boolean)
+                  }));
+                }}
                 placeholder="E.G. Custom hardware accents&#10;Adjustable strap with snap lock&#10;Water-resistant finish"
               />
             </div>
@@ -451,7 +503,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
           <div className="space-y-6">
             {/* Image Section Header */}
             <div>
-              <span className="font-technical-sm text-[9px] uppercase tracking-widest opacity-60">Visual Assets</span>
+              <span className="font-technical-sm text-[9px] uppercase tracking-widest opacity-60 font-bold">Visual Assets</span>
               <div className="flex border border-outline-variant/30 mt-2 font-technical-sm text-[9px] uppercase tracking-widest">
                 <button
                   type="button"
@@ -467,14 +519,53 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   type="button"
                   onClick={() => setImageTab('hover')}
                   className={cn(
-                    "flex-1 p-3 text-center transition-all font-bold cursor-pointer",
+                    "flex-1 p-3 text-center border-r border-outline-variant/30 transition-all font-bold cursor-pointer",
                     imageTab === 'hover' ? "bg-primary text-on-primary" : "text-primary/60 hover:bg-surface-variant/20"
                   )}
                 >
                   Hover Reveal
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setImageTab('gallery')}
+                  className={cn(
+                    "flex-1 p-3 text-center transition-all font-bold cursor-pointer",
+                    imageTab === 'gallery' ? "bg-primary text-on-primary" : "text-primary/60 hover:bg-surface-variant/20"
+                  )}
+                >
+                  Gallery Collection
+                </button>
               </div>
             </div>
+
+            {/* Active gallery list management */}
+            {imageTab === 'gallery' && formData.images && formData.images.length > 0 && (
+              <div className="border border-outline-variant/20 p-4 bg-black/40 space-y-3">
+                <span className="font-technical-sm text-[8px] uppercase tracking-widest opacity-60 block font-bold">
+                  Active Gallery Ledger ({formData.images.length} images)
+                </span>
+                <div className="grid grid-cols-4 gap-3">
+                  {formData.images.map((img, idx) => (
+                    <div key={idx} className="relative aspect-[3/4] border border-outline-variant/30 group bg-neutral-900 overflow-hidden">
+                      <img src={img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" alt="Gallery thumbnail" referrerPolicy="no-referrer" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData(prev => ({
+                            ...prev,
+                            images: (prev.images || []).filter((_, i) => i !== idx)
+                          }));
+                        }}
+                        className="absolute top-1 right-1 bg-red-600 hover:bg-brand-red text-white p-1 rounded-sm text-xs flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 transition-opacity z-10"
+                        title="Remove Image"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Input Selection Block - URL or Direct Upload */}
             <div className="border border-outline-variant/20 p-5 bg-surface-container-lowest space-y-4">
@@ -511,10 +602,10 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => handleImageFileChange(e, imageTab === 'hover')}
+                    onChange={(e) => handleImageFileChange(e, imageTab)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  {uploadProgress === (imageTab === 'hover' ? 'hovering' : 'primary') ? (
+                  {uploadProgress === imageTab ? (
                     <div className="flex flex-col items-center gap-2 py-4">
                       <Loader className="w-5 h-5 animate-spin text-brand-red" />
                       <span className="font-technical-sm text-[9px] uppercase tracking-widest text-brand-red animate-pulse">Uploading Media...</span>
@@ -522,26 +613,59 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   ) : (
                     <div className="flex flex-col items-center gap-2 py-4">
                       <Upload className="w-6 h-6 text-primary/40 group-hover:text-brand-red transition-colors" />
-                      <span className="font-technical-sm text-[9px] uppercase tracking-widest font-bold">Deploy File Segment</span>
+                      <span className="font-technical-sm text-[9px] uppercase tracking-widest font-bold">
+                        {imageTab === 'gallery' ? 'Append Gallery Image' : 'Deploy File Segment'}
+                      </span>
                       <span className="font-technical-sm text-[8px] opacity-40 uppercase">Drag & Drop or Tap here</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <label className="font-technical-sm text-[9px] uppercase opacity-40 tracking-widest flex items-center gap-2">
-                    <LinkIcon className="w-3 h-3" /> External Reference URL
-                  </label>
-                  <input
-                    className="w-full bg-surface-container border border-outline-variant/30 p-3 font-technical-sm text-[10px] focus:border-brand-red outline-none transition-colors"
-                    value={imageTab === 'hover' ? formData.hoverImage : formData.image}
-                    placeholder="https://images.unsplash.com/..."
-                    onChange={e => setFormData(prev => ({
-                      ...prev,
-                      [imageTab === 'hover' ? 'hoverImage' : 'image']: e.target.value
-                    }))}
-                  />
-                </div>
+                imageTab === 'gallery' ? (
+                  <div className="space-y-2">
+                    <label className="font-technical-sm text-[9px] uppercase opacity-40 tracking-widest flex items-center gap-2">
+                      <LinkIcon className="w-3 h-3" /> External Reference URL (Gallery Add)
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        className="flex-1 bg-surface-container border border-outline-variant/30 p-3 font-technical-sm text-[10px] focus:border-brand-red outline-none transition-colors"
+                        value={tempUrl}
+                        placeholder="https://images.unsplash.com/..."
+                        onChange={e => setTempUrl(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (tempUrl.trim()) {
+                            setFormData(prev => ({
+                              ...prev,
+                              images: [...(prev.images || []), tempUrl.trim()]
+                            }));
+                            setTempUrl('');
+                          }
+                        }}
+                        className="bg-brand-red hover:bg-[#aa0000] text-white font-technical-sm text-[9px] uppercase tracking-wider px-4 font-bold cursor-pointer transition-colors"
+                      >
+                        Add Image
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="font-technical-sm text-[9px] uppercase opacity-40 tracking-widest flex items-center gap-2">
+                      <LinkIcon className="w-3 h-3" /> External Reference URL
+                    </label>
+                    <input
+                      className="w-full bg-surface-container border border-outline-variant/30 p-3 font-technical-sm text-[10px] focus:border-brand-red outline-none transition-colors"
+                      value={imageTab === 'hover' ? formData.hoverImage : formData.image}
+                      placeholder="https://images.unsplash.com/..."
+                      onChange={e => setFormData(prev => ({
+                        ...prev,
+                        [imageTab === 'hover' ? 'hoverImage' : 'image']: e.target.value
+                      }))}
+                    />
+                  </div>
+                )
               )}
             </div>
 
@@ -549,21 +673,50 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
             <div>
               <span className="font-technical-sm text-[9px] uppercase tracking-widest opacity-60 block mb-2 font-bold">Live Graphic Linkage</span>
               <div className="aspect-[3/4] border border-outline-variant/20 bg-surface-container-high overflow-hidden relative">
-                {(imageTab === 'hover' ? formData.hoverImage : formData.image) ? (
-                  <img
-                    src={imageTab === 'hover' ? formData.hoverImage : formData.image}
-                    alt="Preview"
-                    className="w-full h-full object-cover grayscale transition-transform hover:scale-105 duration-300"
-                  />
+                {imageTab === 'gallery' ? (
+                  formData.images && formData.images.length > 0 ? (
+                    <div className="w-full h-full p-4 grid grid-cols-2 gap-2 overflow-y-auto bg-black/20">
+                      {formData.images.map((img, i) => (
+                        <div key={i} className="aspect-[3/4] overflow-hidden border border-outline-variant/10 relative">
+                          <img src={img} alt={`Gallery image ${i}`} className="w-full h-full object-cover grayscale" referrerPolicy="no-referrer" />
+                          <span className="absolute bottom-1 left-1 bg-black/60 text-white font-technical-sm text-[6px] px-1 py-0.5">#{i+1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center opacity-30">
+                      <ImageIcon className="w-8 h-8 mb-2" />
+                      <span className="font-technical-sm text-[8px] uppercase tracking-widest">No Gallery Assets Uploaded Yet</span>
+                    </div>
+                  )
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center opacity-30">
-                    <ImageIcon className="w-8 h-8 mb-2" />
-                    <span className="font-technical-sm text-[8px] uppercase tracking-widest">No Graphic Link Registered</span>
-                  </div>
+                  (imageTab === 'hover' ? formData.hoverImage : formData.image) ? (
+                    <img
+                      src={imageTab === 'hover' ? formData.hoverImage : formData.image}
+                      alt="Preview"
+                      className="w-full h-full object-cover grayscale transition-transform hover:scale-105 duration-300"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center opacity-30">
+                      <ImageIcon className="w-8 h-8 mb-2" />
+                      <span className="font-technical-sm text-[8px] uppercase tracking-widest">No Graphic Link Registered</span>
+                    </div>
+                  )
                 )}
                 {imageTab === 'hover' && (
                   <div className="absolute top-2 left-2 bg-brand-red text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
                     Hover Preview
+                  </div>
+                )}
+                {imageTab === 'primary' && (
+                  <div className="absolute top-2 left-2 bg-[#222222] text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
+                    Primary Preview
+                  </div>
+                )}
+                {imageTab === 'gallery' && (
+                  <div className="absolute top-2 left-2 bg-emerald-700 text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
+                    Gallery Collection ({formData.images?.length || 0})
                   </div>
                 )}
               </div>

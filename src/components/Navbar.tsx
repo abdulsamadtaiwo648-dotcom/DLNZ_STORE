@@ -30,7 +30,7 @@ export const Navbar = () => {
   if (isAdmin) return null;
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-background border-b border-outline-variant/30 px-6 md:px-16 h-16 flex justify-between items-center bg-opacity-90 backdrop-blur-sm">
+    <header className="fixed top-0 w-full z-50 bg-[#0c0c0c] border-b border-outline-variant/30 px-6 md:px-16 h-16 flex justify-between items-center shadow-lg">
       <div className="flex items-center gap-4">
         <button 
           onClick={() => setIsOpen(true)}
