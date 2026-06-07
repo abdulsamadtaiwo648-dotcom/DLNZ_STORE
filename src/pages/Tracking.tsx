@@ -19,7 +19,7 @@ export const Tracking = () => {
   const [cancelling, setCancelling] = useState(false);
 
   const handleCancelOrder = async (targetId: string) => {
-    if (!window.confirm('ARE YOU SURE YOU WANT TO DE-COMMISSION AND CANCEL THIS ORDER? THIS OPERATION IS IRREVERSIBLE.')) {
+    if (!window.confirm('Are you sure you want to cancel this order?')) {
       return;
     }
     setCancelling(true);
@@ -35,10 +35,10 @@ export const Tracking = () => {
         const list = await orderService.getUserOrders(user.uid);
         setUserOrders(list);
       }
-      alert('ORDER CANCELLED SUCCESSFULLY.');
+      alert('order canceled successfully');
     } catch (err) {
       console.error('Failed to cancel order:', err);
-      alert('FAILED TO TRANSMIT CANCELLATION COMMAND.');
+      alert('Failed to cancel order.');
     } finally {
       setCancelling(false);
     }
@@ -190,13 +190,13 @@ export const Tracking = () => {
           {order.status === 'Cancelled' && (
             <div className="p-8 bg-red-950/20 border border-brand-red/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
                <div>
-                 <h3 className="font-display text-xl uppercase text-brand-red tracking-tight mb-2">Logistical Registry Cancelled</h3>
+                 <h3 className="font-display text-xl uppercase text-brand-red tracking-tight mb-2">Order Cancelled</h3>
                  <p className="font-technical-sm text-[10px] uppercase opacity-60 tracking-widest leading-relaxed">
-                   THIS SECURE IDENTIFIER VOUCHER HAS BEEN DE-COMMISSIONED. CARRIER ALLOCATION TERMINATED.
+                   THIS ORDER HAS BEEN CANCELLED AND REMOVED FROM ALL DELIVERY FLOWS.
                  </p>
                </div>
                <div className="self-start md:self-center">
-                  <span className="bg-brand-red text-white px-4 py-1.5 font-technical-sm text-[10px] font-bold tracking-widest">REVOKED</span>
+                  <span className="bg-brand-red text-white px-4 py-1.5 font-technical-sm text-[10px] font-bold tracking-widest">CANCELLED</span>
                </div>
             </div>
           )}
@@ -289,26 +289,26 @@ export const Tracking = () => {
                </div>
 
                {(order.status === 'Processing' || order.status === 'Hold') && (
-                 <div className="mt-8 border border-brand-red/20 bg-red-950/10 p-10 space-y-6">
+                 <div className="mt-8 border border-brand-red/25 bg-red-950/10 p-8 space-y-4 font-sans">
                     <div>
-                        <p className="font-technical-sm text-[10px] text-brand-red font-bold mb-3 tracking-widest uppercase">Self-Service Revocation</p>
-                        <p className="font-body text-sm opacity-70 leading-relaxed">
-                           You can decommission this registry document and cancel the order before it is dispatched to a carrier network.
+                        <p className="font-technical-sm text-[10px] text-brand-red font-bold tracking-widest uppercase">Cancel Order</p>
+                        <p className="font-body text-xs opacity-65 leading-relaxed mt-1">
+                           You can cancel this order before it is dispatched to the carrier.
                         </p>
                     </div>
                     <button
                       type="button"
                       disabled={cancelling}
                       onClick={() => handleCancelOrder(order.id)}
-                      className="inline-flex items-center gap-4 border border-brand-red text-brand-red hover:bg-brand-red hover:text-white px-10 py-5 font-technical-sm text-[10px] uppercase tracking-widest font-bold active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                      className="inline-flex items-center gap-4 border border-brand-red text-brand-red hover:bg-brand-red hover:text-white px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
                     >
                       {cancelling ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>REVOKING REGISTRY...</span>
+                          <span>CANCELLING ORDER...</span>
                         </>
                       ) : (
-                        <span>CANCEL ORDER DOCUMENT</span>
+                        <span>CANCEL ORDER</span>
                       )}
                     </button>
                  </div>
