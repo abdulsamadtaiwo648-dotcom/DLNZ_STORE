@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { productService } from '../services/productService';
 import { Product } from '../types';
 import { cn } from '../lib/utils';
-import { MessageSquare, Heart, ChevronDown, Plus, ShoppingBag } from 'lucide-react';
+import { MessageSquare, Heart, ChevronDown, Plus, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../components/FirebaseProvider';
 import { useCart } from '../components/CartProvider';
 import { WHATSAPP_LINK } from '../constants';
@@ -18,6 +18,8 @@ export const ProductDetail = () => {
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState('M');
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [selectedColorIndex, setSelectedColorIndex] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,6 +29,8 @@ export const ProductDetail = () => {
           productService.getAllProducts()
         ]);
         setProduct(currentProduct);
+        setCurrentImageIndex(0);
+        setSelectedColorIndex(0);
         if (currentProduct) {
           setRelatedProducts(allProducts.filter(p => p.id !== id && p.category === currentProduct.category).slice(0, 4));
         }
@@ -47,12 +51,16 @@ export const ProductDetail = () => {
   if (!product) return <div className="pt-40 text-center font-display text-2xl uppercase">Product not found.</div>;
 
   const handleWhatsAppCheckout = () => {
+    const colorFinishName = product.colors && product.colors.length > 0 
+      ? product.colors[selectedColorIndex] 
+      : 'DEFAULT';
     const message = `Hello DLNZ, I would like to order:
     
 Product: ${product.name}
 SKU: ${product.sku}
 Price: ₦${product.price.toLocaleString()}
 Size: ${selectedSize}
+Color/Finish: ${colorFinishName.toUpperCase()}
 User: ${user?.email || 'Guest'}
 
 Please confirm availability and payment details.`;
@@ -65,30 +73,105 @@ Please confirm availability and payment details.`;
     product.hoverImage
   ].filter(Boolean) as string[];
 
+  const nextSlide = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
   return (
     <div className="pt-24 pb-32 max-w-7xl mx-auto px-6 md:px-16">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-24">
-        {/* Gallery */}
+        {/* Gallery Slideshow */}
         <div className="md:col-span-7 space-y-6">
-          <div className="relative aspect-[3/4] bg-brand-charcoal overflow-hidden group">
-            <img 
-              alt={product.name} 
-              className="w-full h-full object-cover editorial-image-hover transition-transform duration-700 ease-out" 
-              src={images[0]} 
-            />
-            <div className="absolute bottom-6 left-6 font-technical-sm text-[10px] bg-black/60 backdrop-blur-md px-4 py-2 border border-brand-silver/20 tracking-widest text-primary">
-               IMG_01 / PERSPECTIVE_A
+          <div className="relative aspect-[3/4] bg-brand-charcoal overflow-hidden border border-outline-variant/20 group">
+            
+            {/* Main Current Slide */}
+            <div className="w-full h-full relative overflow-hidden">
+              <motion.img 
+                key={currentImageIndex}
+                initial={{ opacity: 0, scale: 1.02 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.35, ease: 'easeOut' }}
+                alt={product.name} 
+                className="w-full h-full object-cover" 
+                src={images[currentImageIndex]} 
+                referrerPolicy="no-referrer"
+              />
             </div>
+
+            {/* View Meta Tag Overlay */}
+            <div className="absolute bottom-6 left-6 font-technical-sm text-[9px] bg-black/85 backdrop-blur-md px-4 py-2 border border-brand-silver/20 tracking-widest text-primary font-bold">
+               IMG_0{currentImageIndex + 1} / PERSPECTIVE_{String.fromCharCode(65 + currentImageIndex)} {product.colors && product.colors[selectedColorIndex] ? `/ ${product.colors[selectedColorIndex].toUpperCase()}` : ''}
+            </div>
+
+            {/* Slider Navigation Controls */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={prevSlide}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-white/20 bg-black/60 hover:bg-white hover:text-black hover:scale-105 active:scale-95 text-white transition-all cursor-pointer z-10"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={nextSlide}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center border border-white/20 bg-black/60 hover:bg-white hover:text-black hover:scale-105 active:scale-95 text-white transition-all cursor-pointer z-10"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            {/* Tiny Indicator Bars */}
+            {images.length > 1 && (
+              <div className="absolute bottom-6 right-6 flex gap-1.5 z-10">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setCurrentImageIndex(idx)}
+                    className={cn(
+                      "h-1 transition-all duration-300",
+                      currentImageIndex === idx ? "w-7 bg-brand-red" : "w-2 bg-white/40 hover:bg-white/70"
+                    )}
+                    aria-label={`Go to slide ${idx + 1}`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-          {images.slice(1).length > 0 && (
-            <div className={`grid gap-6 ${images.slice(1).length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              {images.slice(1).map((img, i) => (
-                <div key={i} className="aspect-[3/4] bg-brand-charcoal overflow-hidden border border-outline-variant/10 relative group">
-                  <img alt="Detail" className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 group-hover:scale-105" src={img} />
-                  <div className="absolute bottom-4 left-4 font-technical-sm text-[8px] bg-black/60 backdrop-blur-md px-2 py-1 border border-brand-silver/10 tracking-widest text-primary">
-                    IMG_0{i + 2} / PERSPECTIVE_{String.fromCharCode(66 + i)}
+
+          {/* Slide Deck Thumbnails underneath Slider */}
+          {images.length > 1 && (
+            <div className="grid grid-cols-5 gap-3">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setCurrentImageIndex(idx);
+                    if (product.colors && product.colors.length > idx) {
+                      setSelectedColorIndex(idx);
+                    }
+                  }}
+                  className={cn(
+                    "aspect-[3/4] bg-brand-charcoal overflow-hidden border relative group outline-none cursor-pointer",
+                    currentImageIndex === idx 
+                      ? "border-brand-red bg-white/5 scale-[1.02] shadow" 
+                      : "border-outline-variant/10 opacity-70 hover:opacity-100 hover:border-white/30 transition-all"
+                  )}
+                >
+                  <img src={img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" alt={`Perspective variant ${idx + 1}`} referrerPolicy="no-referrer" />
+                  <div className="absolute bottom-1.5 left-1.5 bg-black/85 text-[7px] font-technical-sm px-1 py-0.5 border border-white/5 font-bold">
+                    0{idx + 1}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -146,18 +229,37 @@ Please confirm availability and payment details.`;
 
             {/* Colors */}
             <div className="space-y-4">
-               <span className="font-technical-sm text-[10px] tracking-widest opacity-60">FINISH</span>
-               <div className="flex gap-5">
+               <div className="flex justify-between items-center text-[10px] font-technical-sm tracking-widest opacity-60 uppercase">
+                  <span>FINISH</span>
+                  <span className="text-brand-red tracking-widest bg-white/5 border border-white/5 px-2.5 py-0.5 text-[8px] font-bold">
+                    {product.colors && product.colors[selectedColorIndex] ? product.colors[selectedColorIndex].toUpperCase() : 'DEFAULT'}
+                  </span>
+               </div>
+               <div className="flex gap-4">
                  {product.colors?.map((c, i) => (
-                   <div 
+                   <button 
                      key={i} 
+                     type="button"
+                     onClick={() => {
+                       setSelectedColorIndex(i);
+                       if (images.length > i) {
+                         setCurrentImageIndex(i);
+                       }
+                     }}
                      className={cn(
-                       "w-10 h-10 rounded-full border cursor-pointer ring-offset-4 ring-offset-surface transition-all",
-                       i === 0 ? "border-primary ring-2 ring-primary" : "border-outline-variant/30 hover:border-primary"
+                       "w-10 h-10 rounded-full border cursor-pointer ring-offset-4 ring-offset-black transition-all flex items-center justify-center p-0 overflow-hidden relative",
+                       selectedColorIndex === i 
+                         ? "border-brand-red ring-2 ring-brand-red scale-110" 
+                         : "border-outline-variant/30 hover:border-primary"
                      )}
-                     style={{ backgroundColor: c }}
-                   />
-                 )) || <div className="w-10 h-10 rounded-full border border-primary bg-black ring-2 ring-primary ring-offset-2 ring-offset-surface" />}
+                     title={c}
+                   >
+                     <span 
+                       className="w-full h-full block rounded-full scale-[0.8]" 
+                       style={{ backgroundColor: c }}
+                     />
+                   </button>
+                 )) || <div className="w-10 h-10 rounded-full border border-primary bg-black ring-2 ring-primary ring-offset-2 ring-offset-black" />}
                </div>
             </div>
           </div>
