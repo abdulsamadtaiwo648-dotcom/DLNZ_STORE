@@ -16,6 +16,33 @@ export const Tracking = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [userOrders, setUserOrders] = useState<Order[]>([]);
   const [fetchingUserOrders, setFetchingUserOrders] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelOrder = async (targetId: string) => {
+    if (!window.confirm('ARE YOU SURE YOU WANT TO DE-COMMISSION AND CANCEL THIS ORDER? THIS OPERATION IS IRREVERSIBLE.')) {
+      return;
+    }
+    setCancelling(true);
+    try {
+      await orderService.updateOrderStatus(targetId, 'Cancelled');
+      // refresh order details
+      const found = await orderService.getOrderById(targetId);
+      if (found) {
+        setOrder(found);
+      }
+      // refresh order list
+      if (user) {
+        const list = await orderService.getUserOrders(user.uid);
+        setUserOrders(list);
+      }
+      alert('ORDER CANCELLED SUCCESSFULLY.');
+    } catch (err) {
+      console.error('Failed to cancel order:', err);
+      alert('FAILED TO TRANSMIT CANCELLATION COMMAND.');
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -159,7 +186,21 @@ export const Tracking = () => {
           </p>
         </div>
       ) : order ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-24">
+        <div className="space-y-12">
+          {order.status === 'Cancelled' && (
+            <div className="p-8 bg-red-950/20 border border-brand-red/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
+               <div>
+                 <h3 className="font-display text-xl uppercase text-brand-red tracking-tight mb-2">Logistical Registry Cancelled</h3>
+                 <p className="font-technical-sm text-[10px] uppercase opacity-60 tracking-widest leading-relaxed">
+                   THIS SECURE IDENTIFIER VOUCHER HAS BEEN DE-COMMISSIONED. CARRIER ALLOCATION TERMINATED.
+                 </p>
+               </div>
+               <div className="self-start md:self-center">
+                  <span className="bg-brand-red text-white px-4 py-1.5 font-technical-sm text-[10px] font-bold tracking-widest">REVOKED</span>
+               </div>
+            </div>
+          )}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-24">
           {/* Timeline */}
           <div className="lg:col-span-7">
              <div className="space-y-0 relative">
@@ -246,9 +287,36 @@ export const Tracking = () => {
                      <ExternalLink className="w-4 h-4" />
                   </a>
                </div>
+
+               {(order.status === 'Processing' || order.status === 'Hold') && (
+                 <div className="mt-8 border border-brand-red/20 bg-red-950/10 p-10 space-y-6">
+                    <div>
+                        <p className="font-technical-sm text-[10px] text-brand-red font-bold mb-3 tracking-widest uppercase">Self-Service Revocation</p>
+                        <p className="font-body text-sm opacity-70 leading-relaxed">
+                           You can decommission this registry document and cancel the order before it is dispatched to a carrier network.
+                        </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={cancelling}
+                      onClick={() => handleCancelOrder(order.id)}
+                      className="inline-flex items-center gap-4 border border-brand-red text-brand-red hover:bg-brand-red hover:text-white px-10 py-5 font-technical-sm text-[10px] uppercase tracking-widest font-bold active:scale-95 transition-all disabled:opacity-50 cursor-pointer"
+                    >
+                      {cancelling ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>REVOKING REGISTRY...</span>
+                        </>
+                      ) : (
+                        <span>CANCEL ORDER DOCUMENT</span>
+                      )}
+                    </button>
+                 </div>
+               )}
             </div>
           </div>
         </div>
+      </div>
       ) : (
         <div className="min-h-[350px] border border-outline-variant/20 bg-surface-container-lowest p-12 text-center max-w-xl mx-auto flex flex-col items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-brand-charcoal border border-outline-variant/30 flex items-center justify-center mb-6">
@@ -322,6 +390,7 @@ export const Tracking = () => {
                           itm.status === 'Delivered' ? "bg-green-500/10 text-green-400 border border-green-500/20" :
                           itm.status === 'Shipped' ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" :
                           itm.status === 'Hold' ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/20" :
+                          itm.status === 'Cancelled' ? "bg-zinc-800/10 text-zinc-500 border border-zinc-500/20 opacity-50" :
                           "bg-brand-red/10 text-brand-red border border-brand-red/20"
                         )}>
                           {itm.status || 'Processing'}

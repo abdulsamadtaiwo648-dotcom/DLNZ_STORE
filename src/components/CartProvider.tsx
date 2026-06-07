@@ -9,9 +9,9 @@ import { cn } from '../lib/utils';
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, size: string, quantity?: number) => void;
-  removeFromCart: (productId: string, size: string) => void;
-  updateQuantity: (productId: string, size: string, change: number) => void;
+  addToCart: (product: Product, size: string, quantity?: number, selectedColor?: string, selectedImage?: string) => void;
+  removeFromCart: (productId: string, size: string, selectedColor?: string) => void;
+  updateQuantity: (productId: string, size: string, change: number, selectedColor?: string) => void;
   clearCart: () => void;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
@@ -55,9 +55,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('dlnz-cart', JSON.stringify(newCart));
   };
 
-  const addToCart = (product: Product, size: string, quantity = 1) => {
+  const addToCart = (product: Product, size: string, quantity = 1, selectedColor?: string, selectedImage?: string) => {
     const itemIndex = cart.findIndex(
-      item => item.product.id === product.id && item.selectedSize === size
+      item => item.product.id === product.id && item.selectedSize === size && item.selectedColor === selectedColor
     );
 
     if (itemIndex > -1) {
@@ -65,7 +65,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       nextCart[itemIndex].quantity += quantity;
       saveCart(nextCart);
     } else {
-      saveCart([...cart, { product, selectedSize: size, quantity }]);
+      saveCart([...cart, { product, selectedSize: size, quantity, selectedColor, selectedImage }]);
     }
     // Automatically open the cart drawer when adding an item!
     setIsCartOpen(true);
@@ -74,16 +74,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOrderSuccessId(null);
   };
 
-  const removeFromCart = (productId: string, size: string) => {
+  const removeFromCart = (productId: string, size: string, selectedColor?: string) => {
     const nextCart = cart.filter(
-      item => !(item.product.id === productId && item.selectedSize === size)
+      item => !(item.product.id === productId && item.selectedSize === size && item.selectedColor === selectedColor)
     );
     saveCart(nextCart);
   };
 
-  const updateQuantity = (productId: string, size: string, change: number) => {
+  const updateQuantity = (productId: string, size: string, change: number, selectedColor?: string) => {
     const nextCart = cart.map(item => {
-      if (item.product.id === productId && item.selectedSize === size) {
+      if (item.product.id === productId && item.selectedSize === size && item.selectedColor === selectedColor) {
         const nextQty = item.quantity + change;
         return { ...item, quantity: nextQty < 1 ? 1 : nextQty };
       }
@@ -120,15 +120,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         status: 'Processing',
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
         tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`,
-        imageUrl: cart[0]?.product.image || '',
-        productName: cart[0]?.product.name ? (cart[0].product.name + (cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : '')) : 'DLNZ Collector Item'
+        imageUrl: cart[0]?.selectedImage || cart[0]?.product.image || '',
+        productName: cart[0]?.product.name 
+          ? `${cart[0].product.name}${cart[0].selectedColor ? ` / ${cart[0].selectedColor.toUpperCase()}` : ''}${cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : ''}`
+          : 'DLNZ Collector Item'
       });
     } catch (err) {
       console.warn('Real-time order registration for WhatsApp cart failed:', err);
     }
 
     const cartSummary = cart.map(
-      item => `- ${item.product.name} [Size: ${item.selectedSize}] x ${item.quantity} = ₦${(item.product.price * item.quantity).toLocaleString()}`
+      item => `- ${item.product.name} [Size: ${item.selectedSize}${item.selectedColor ? `, Finish: ${item.selectedColor.toUpperCase()}` : ''}] x ${item.quantity} = ₦${(item.product.price * item.quantity).toLocaleString()}`
     ).join('\n');
 
     const orderIdString = orderId ? ` (Order ID: ${orderId})` : '';
@@ -172,8 +174,10 @@ Please advise on carrier scheduling and completion of purchase.`;
         status: 'Processing',
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
         tracking: trackingCode,
-        imageUrl: cart[0]?.product.image || '',
-        productName: cart[0]?.product.name ? (cart[0].product.name + (cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : '')) : 'DLNZ Collector Item'
+        imageUrl: cart[0]?.selectedImage || cart[0]?.product.image || '',
+        productName: cart[0]?.product.name 
+          ? `${cart[0].product.name}${cart[0].selectedColor ? ` / ${cart[0].selectedColor.toUpperCase()}` : ''}${cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : ''}`
+          : 'DLNZ Collector Item'
       });
 
       if (orderId) {
@@ -323,39 +327,47 @@ Please advise on carrier scheduling and completion of purchase.`;
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        key={`${item.product.id}-${item.selectedSize}`}
+                        key={`${item.product.id}-${item.selectedSize}-${item.selectedColor || ''}`}
                         className="flex gap-4 border-b border-outline-variant/10 pb-6"
                       >
                         <div className="w-20 aspect-[3/4] bg-brand-charcoal overflow-hidden border border-outline-variant/30 flex-shrink-0">
-                          <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" />
+                          <img src={item.selectedImage || item.product.image} alt={item.product.name} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" referrerPolicy="no-referrer" />
                         </div>
                         <div className="flex-grow flex flex-col justify-between">
                           <div>
                             <div className="flex justify-between items-start">
                               <h4 className="font-display text-sm uppercase tracking-tight text-primary">{item.product.name}</h4>
                               <button 
-                                onClick={() => removeFromCart(item.product.id, item.selectedSize)}
+                                onClick={() => removeFromCart(item.product.id, item.selectedSize, item.selectedColor)}
                                 className="text-on-surface-variant opacity-40 hover:opacity-100 hover:text-brand-red transition-all cursor-pointer"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <p className="font-technical-sm text-[8px] opacity-40 uppercase tracking-widest mt-1">
-                              SIZE: <span className="text-white font-bold">{item.selectedSize}</span> / CAT: {item.product.category}
+                            <p className="font-technical-sm text-[8px] opacity-40 uppercase tracking-widest mt-1 flex flex-wrap gap-2">
+                              <span>SIZE: <span className="text-white font-bold">{item.selectedSize}</span></span>
+                              {item.selectedColor && (
+                                <>
+                                  <span>/</span>
+                                  <span>FINISH: <span className="text-brand-red font-bold">{item.selectedColor.toUpperCase()}</span></span>
+                                </>
+                              )}
+                              <span>/</span> 
+                              <span>CAT: {item.product.category}</span>
                             </p>
                           </div>
 
                           <div className="flex justify-between items-end mt-4">
                             <div className="flex items-center gap-3 border border-outline-variant/30 px-2 py-1">
                               <button 
-                                onClick={() => updateQuantity(item.product.id, item.selectedSize, -1)}
+                                onClick={() => updateQuantity(item.product.id, item.selectedSize, -1, item.selectedColor)}
                                 className="text-primary hover:text-brand-red p-1 cursor-pointer"
                               >
                                 <Minus className="w-3 h-3" />
                               </button>
                               <span className="font-technical text-xs w-4 text-center">{item.quantity}</span>
                               <button 
-                                onClick={() => updateQuantity(item.product.id, item.selectedSize, 1)}
+                                onClick={() => updateQuantity(item.product.id, item.selectedSize, 1, item.selectedColor)}
                                 className="text-primary hover:text-brand-red p-1 cursor-pointer"
                               >
                                 <Plus className="w-3 h-3" />

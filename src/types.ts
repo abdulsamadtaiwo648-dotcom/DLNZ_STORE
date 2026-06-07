@@ -24,7 +24,7 @@ export interface Order {
   customerEmail: string;
   date: string;
   amount: number;
-  status: 'Processing' | 'Shipped' | 'Hold' | 'Delivered';
+  status: 'Processing' | 'Shipped' | 'Hold' | 'Delivered' | 'Cancelled';
   tracking?: string;
   userId?: string;
   createdAt?: any;
@@ -36,5 +36,7 @@ export interface CartItem {
   product: Product;
   quantity: number;
   selectedSize: string;
+  selectedColor?: string;
+  selectedImage?: string;
 }
 

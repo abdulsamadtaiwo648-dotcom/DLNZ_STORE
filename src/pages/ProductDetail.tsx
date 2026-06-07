@@ -267,7 +267,11 @@ Please confirm availability and payment details.`;
           {/* Actions */}
           <div className="space-y-4 pt-10 border-t border-outline-variant/10">
             <button 
-              onClick={() => addToCart(product, selectedSize)}
+              onClick={() => {
+                const colorFin = product.colors && product.colors[selectedColorIndex] ? product.colors[selectedColorIndex] : undefined;
+                const selImg = images[currentImageIndex] || product.image;
+                addToCart(product, selectedSize, 1, colorFin, selImg);
+              }}
               className="w-full bg-white text-black font-technical-sm text-xs py-6 flex items-center justify-center gap-4 active:scale-95 transition-all hover:bg-neutral-200 tracking-[0.2em] font-bold cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />

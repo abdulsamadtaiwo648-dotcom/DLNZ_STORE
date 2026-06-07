@@ -259,6 +259,8 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
                       <span className={cn(
                         "px-3 py-1 text-[8px] font-technical-sm uppercase tracking-widest",
                         order.status === 'Processing' ? "bg-white text-black font-bold" :
+                        order.status === 'Cancelled' ? "bg-zinc-800 text-zinc-500 border border-zinc-700/50" :
+                        order.status === 'Delivered' ? "bg-green-950 text-green-400 border border-green-900/30 font-semibold" :
                         order.status === 'Shipped' ? "bg-brand-charcoal text-primary border border-outline/30" :
                         "border border-brand-red text-brand-red"
                       )}>
@@ -275,6 +277,7 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
                         <option value="Shipped" className="bg-black text-white">Shipped</option>
                         <option value="Hold" className="bg-black text-white font-bold text-brand-red">Hold</option>
                         <option value="Delivered" className="bg-black text-white">Delivered</option>
+                        <option value="Cancelled" className="bg-black text-white">Cancelled</option>
                       </select>
                    </td>
                 </tr>
