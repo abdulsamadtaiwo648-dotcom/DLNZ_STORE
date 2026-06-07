@@ -28,6 +28,8 @@ export interface Order {
   tracking?: string;
   userId?: string;
   createdAt?: any;
+  imageUrl?: string;
+  productName?: string;
 }
 
 export interface CartItem {

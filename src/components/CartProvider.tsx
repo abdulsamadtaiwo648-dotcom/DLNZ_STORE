@@ -119,7 +119,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         amount: subtotal,
         status: 'Processing',
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
-        tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`
+        tracking: `TRK-${Math.floor(10000000 + Math.random() * 90000000)}`,
+        imageUrl: cart[0]?.product.image || '',
+        productName: cart[0]?.product.name ? (cart[0].product.name + (cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : '')) : 'DLNZ Collector Item'
       });
     } catch (err) {
       console.warn('Real-time order registration for WhatsApp cart failed:', err);
@@ -169,7 +171,9 @@ Please advise on carrier scheduling and completion of purchase.`;
         amount: subtotal,
         status: 'Processing',
         date: new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }),
-        tracking: trackingCode
+        tracking: trackingCode,
+        imageUrl: cart[0]?.product.image || '',
+        productName: cart[0]?.product.name ? (cart[0].product.name + (cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : '')) : 'DLNZ Collector Item'
       });
 
       if (orderId) {

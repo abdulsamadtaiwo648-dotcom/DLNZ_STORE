@@ -211,9 +211,10 @@ export const Tracking = () => {
           <div className="lg:col-span-5 space-y-16">
             <div className="aspect-[4/5] bg-brand-charcoal overflow-hidden border border-outline-variant/10 grayscale opacity-80 hover:opacity-100 transition-all duration-1000">
                <img 
-                 alt="Order Item" 
+                 alt={order.productName || "Order Item"} 
                  className="w-full h-full object-cover" 
-                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuANfkNmleLkwcHHi-3iG6QiqS72q_IfoFXKRiW8c-TC6VaF3OMq20kUXd2OICGCpx_BPzbL2iQmua0qOkyZFV-4-YAPDY8zyS2p52FWkgD0-64h0LUyw22DGfhymB4EwGLZJkQx-YPKvyeMsw41mURqSWtBj4tpEaBMGCzhMZjKvIsiA7LeDqekvfzY8a8-No3knsnspGohmDNZikAgh4dwY8VHz0UxOlg4iqh0TCvNzGtHAnVrtjlZrcEPDi-O7MoN8slrObCYhro" 
+                 src={order.imageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuANfkNmleLkwcHHi-3iG6QiqS72q_IfoFXKRiW8c-TC6VaF3OMq20kUXd2OICGCpx_BPzbL2iQmua0qOkyZFV-4-YAPDY8zyS2p52FWkgD0-64h0LUyw22DGfhymB4EwGLZJkQx-YPKvyeMsw41mURqSWtBj4tpEaBMGCzhMZjKvIsiA7LeDqekvfzY8a8-No3knsnspGohmDNZikAgh4dwY8VHz0UxOlg4iqh0TCvNzGtHAnVrtjlZrcEPDi-O7MoN8slrObCYhro"} 
+                 referrerPolicy="no-referrer"
                />
             </div>
 
@@ -221,7 +222,7 @@ export const Tracking = () => {
                <h2 className="font-technical-sm text-[10px] tracking-[0.3em] opacity-40 mb-8 uppercase">Order Summary / {order.id}</h2>
                <div className="flex justify-between items-start mb-6">
                   <div>
-                    <p className="font-display text-2xl uppercase tracking-tighter leading-none mb-2">DLNZ Collector Item</p>
+                    <p className="font-display text-2xl uppercase tracking-tighter leading-none mb-2">{order.productName || 'DLNZ Collector Item'}</p>
                     <p className="font-technical-sm text-[10px] opacity-40 uppercase">Recipient: {order.customerName}</p>
                     <p className="font-technical-sm text-[10px] opacity-40 uppercase">Loyalty Status: Verified Account</p>
                   </div>
