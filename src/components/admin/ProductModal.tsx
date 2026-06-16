@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Box, Tag, DollarSign, Layers, Image as ImageIcon, Upload, Link as LinkIcon, Loader } from 'lucide-react';
+import { X, Save, Box, Tag, DollarSign, Layers, Image as ImageIcon, Upload, Link as LinkIcon, Loader, Trash2 } from 'lucide-react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../lib/firebase';
 import { Product } from '../../types';
@@ -671,8 +671,26 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
 
             {/* Preview Panel */}
             <div>
-              <span className="font-technical-sm text-[9px] uppercase tracking-widest opacity-60 block mb-2 font-bold">Live Graphic Linkage</span>
-              <div className="aspect-[3/4] border border-outline-variant/20 bg-surface-container-high overflow-hidden relative">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-technical-sm text-[9px] uppercase tracking-widest opacity-60 font-bold">Live Graphic Linkage</span>
+                {imageTab !== 'gallery' && (imageTab === 'hover' ? formData.hoverImage : formData.image) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        [imageTab === 'hover' ? 'hoverImage' : 'image']: ''
+                      }));
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 text-[8.5px] font-technical-sm tracking-widest text-[#ff4d4d] hover:text-white bg-red-950/25 hover:bg-brand-red border border-red-900/30 hover:border-brand-red select-none transition-all duration-350 cursor-pointer font-bold"
+                    title={`Delete ${imageTab === 'hover' ? 'Hover' : 'Primary'} Image Only`}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete Image Only
+                  </button>
+                )}
+              </div>
+              <div className="aspect-[3/4] border border-outline-variant/20 bg-surface-container-high overflow-hidden relative selection:bg-transparent">
                 {imageTab === 'gallery' ? (
                   formData.images && formData.images.length > 0 ? (
                     <div className="w-full h-full p-4 grid grid-cols-2 gap-2 overflow-y-auto bg-black/20">
@@ -691,12 +709,29 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   )
                 ) : (
                   (imageTab === 'hover' ? formData.hoverImage : formData.image) ? (
-                    <img
-                      src={imageTab === 'hover' ? formData.hoverImage : formData.image}
-                      alt="Preview"
-                      className="w-full h-full object-cover grayscale transition-transform hover:scale-105 duration-300"
-                      referrerPolicy="no-referrer"
-                    />
+                    <div className="relative w-full h-full group">
+                      <img
+                        src={imageTab === 'hover' ? formData.hoverImage : formData.image}
+                        alt="Preview"
+                        className="w-full h-full object-cover grayscale transition-transform hover:scale-105 duration-300"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              [imageTab === 'hover' ? 'hoverImage' : 'image']: ''
+                            }));
+                          }}
+                          className="bg-brand-red hover:bg-red-700 text-white font-technical-sm text-[9px] uppercase tracking-[0.2em] font-bold px-4 py-3 flex items-center justify-center gap-2 border border-brand-red transition-all scale-95 hover:scale-100 duration-200 cursor-pointer shadow-[0_0_15px_rgba(139,0,0,0.3)]"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Delete Image Only
+                        </button>
+                      </div>
+                    </div>
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center opacity-30">
                       <ImageIcon className="w-8 h-8 mb-2" />
@@ -705,17 +740,17 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   )
                 )}
                 {imageTab === 'hover' && (
-                  <div className="absolute top-2 left-2 bg-brand-red text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
+                  <div className="absolute top-2 left-2 bg-brand-red text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
                     Hover Preview
                   </div>
                 )}
                 {imageTab === 'primary' && (
-                  <div className="absolute top-2 left-2 bg-[#222222] text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
+                  <div className="absolute top-2 left-2 bg-[#222222] text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
                     Primary Preview
                   </div>
                 )}
                 {imageTab === 'gallery' && (
-                  <div className="absolute top-2 left-2 bg-emerald-700 text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5">
+                  <div className="absolute top-2 left-2 bg-emerald-700 text-white font-technical-sm text-[7px] uppercase tracking-widest px-1.5 py-0.5 pointer-events-none">
                     Gallery Collection ({formData.images?.length || 0})
                   </div>
                 )}
