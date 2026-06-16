@@ -103,18 +103,28 @@ export const Collections = () => {
           <div className="sticky top-28 space-y-16">
             <div>
               <h3 className="font-technical-sm text-label-xs tracking-widest mb-6 opacity-60">Category</h3>
-              <ul className="space-y-4">
+              <ul className="space-y-4 select-none">
                 {categories.map(cat => (
                   <li 
                     key={cat}
                     onClick={() => setFilter(cat)}
                     className={cn(
-                      "cursor-pointer font-body text-sm uppercase tracking-wide transition-all flex items-center justify-between",
+                      "cursor-pointer font-body text-sm uppercase tracking-wide transition-all flex items-center gap-3.5 group py-0.5",
                       filter === cat ? "text-primary font-bold" : "text-on-surface-variant hover:text-primary"
                     )}
                   >
+                    {/* Custom Luxury Checkbox */}
+                    <div className={cn(
+                      "w-4 h-4 border transition-all flex items-center justify-center flex-shrink-0 duration-200",
+                      filter === cat 
+                        ? "border-brand-red bg-brand-red/10 animate-pulse" 
+                        : "border-outline-variant/40 group-hover:border-[#888888]"
+                    )}>
+                      {filter === cat && (
+                        <div className="w-1.5 h-1.5 bg-brand-red" />
+                      )}
+                    </div>
                     <span>{cat}</span>
-                    {filter === cat && <div className="w-1 h-1 bg-brand-red rounded-full" />}
                   </li>
                 ))}
               </ul>
