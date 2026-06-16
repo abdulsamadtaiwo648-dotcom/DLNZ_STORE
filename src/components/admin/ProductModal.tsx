@@ -103,7 +103,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
       setFormData({
         name: rest.name || '',
         price: rest.price || 0,
-        category: rest.category || 'Apparel',
+        category: rest.category || 'Clothes',
         subcategory: rest.subcategory || '',
         image: rest.image || '',
         hoverImage: rest.hoverImage || '',
@@ -123,7 +123,7 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
       setFormData({
         name: '',
         price: 0,
-        category: 'Apparel',
+        category: 'Clothes',
         subcategory: '',
         image: '',
         hoverImage: '',
@@ -399,10 +399,10 @@ export const ProductModal = ({ product, isOpen, onClose, onSuccess }: ProductMod
                   value={formData.category}
                   onChange={e => setFormData({ ...formData, category: e.target.value })}
                 >
-                  <option value="Apparel">Apparel</option>
-                  <option value="Accessories">Accessories</option>
                   <option value="Footwear">Footwear</option>
-                  <option value="Lifestyle">Lifestyle</option>
+                  <option value="Clothes">Clothes</option>
+                  <option value="Accessories & Jewelry">Accessories & Jewelry</option>
+                  <option value="Bags">Bags</option>
                 </select>
               </div>
               <div className="space-y-2">

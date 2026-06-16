@@ -38,12 +38,21 @@ export const Collections = () => {
     );
   }
 
-  const categories = ['All', ...Array.from(new Set(products.map(p => p.category)))];
+  const categories = ['All', 'Footwear', 'Clothes', 'Accessories & Jewelry', 'Bags'];
   const sizes = ['S', 'M', 'L', 'XL'];
 
   let filteredProducts = filter === 'All' 
     ? products 
-    : products.filter(p => p.category === filter);
+    : products.filter(p => {
+        const catUpper = p.category?.toUpperCase() || '';
+        if (filter === 'Clothes') {
+          return catUpper === 'CLOTHES' || catUpper === 'APPAREL';
+        }
+        if (filter === 'Accessories & Jewelry') {
+          return catUpper === 'ACCESSORIES & JEWELRY' || catUpper === 'ACCESSORIES' || catUpper === 'JEWELRY';
+        }
+        return catUpper === filter.toUpperCase();
+      });
 
   if (searchQuery.trim()) {
     const queryTerm = searchQuery.toLowerCase().trim();
