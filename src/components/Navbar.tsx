@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Search, ShoppingBag, X, User as UserIcon, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -7,15 +7,32 @@ import { cn } from '../lib/utils';
 import { Logo } from './Logo';
 import { useAuth } from './FirebaseProvider';
 import { useCart } from './CartProvider';
+import { useCurrency, currencies, CurrencyCode } from './CurrencyContext';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin: isUserAdmin, setIsAuthModalOpen } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
+  const { currencyCode, setCurrency } = useCurrency();
+
+  const currencyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
+        setIsCurrencyOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
 
   const navLinks = [
@@ -91,6 +108,47 @@ export const Navbar = () => {
             </motion.form>
           )}
         </AnimatePresence>
+
+        {/* Custom Luxury Currency Selector */}
+        <div ref={currencyRef} className="relative">
+          <button
+            onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+            className="flex items-center gap-1.5 px-3 py-1.5 font-technical-sm text-[9.5px] uppercase tracking-widest text-primary hover:text-brand-red border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] transition-all duration-300 focus:outline-none cursor-pointer"
+            title="Switch Currency Protocol"
+          >
+            <span>{currencyCode}</span>
+            <span className="opacity-40 font-mono">({currencies[currencyCode].symbol})</span>
+          </button>
+          
+          <AnimatePresence>
+            {isCurrencyOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 4 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 bg-[#0c0c0c] border border-outline-variant/30 py-1.5 min-w-[130px] shadow-2xl z-50 flex flex-col"
+              >
+                {(Object.keys(currencies) as CurrencyCode[]).map((code) => (
+                  <button
+                    key={code}
+                    onClick={() => {
+                      setCurrency(code);
+                      setIsCurrencyOpen(false);
+                    }}
+                    className={cn(
+                      "w-full text-left px-4 py-2 font-technical-sm text-[9px] tracking-[0.15em] uppercase transition-all duration-200 flex justify-between items-center hover:bg-brand-red/10 hover:text-white cursor-pointer",
+                      currencyCode === code ? "text-brand-red font-bold" : "text-[#999999]"
+                    )}
+                  >
+                    <span>{currencies[code].label.split(' ')[0]}</span>
+                    <span className="opacity-70 font-mono">{currencies[code].symbol}</span>
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <button 
           onClick={() => setIsSearchOpen(!isSearchOpen)}

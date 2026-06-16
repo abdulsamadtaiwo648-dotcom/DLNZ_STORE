@@ -5,10 +5,12 @@ import { productService } from '../services/productService';
 import { Product } from '../types';
 import { FlareIcon } from '../components/Icons';
 import { Logo } from '../components/Logo';
+import { useCurrency } from '../components/CurrencyContext';
 
 export const Home = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     const unsubscribe = productService.subscribeToProducts((data) => {
@@ -96,7 +98,7 @@ export const Home = () => {
             <div className="absolute bottom-10 left-10 z-20">
               <p className="font-technical-sm text-[10px] bg-black/80 text-white px-3 py-1 mb-3 inline-block">SS24-JK01</p>
               <h3 className="font-display text-3xl md:text-4xl text-white uppercase group-hover:text-brand-red transition-colors">{featured[0]?.name}</h3>
-              <p className="font-technical-sm text-label-xs text-white mt-1">₦{featured[0]?.price?.toLocaleString() || ''}</p>
+              <p className="font-technical-sm text-label-xs text-white mt-1">{featured[0]?.price ? formatPrice(featured[0].price) : ''}</p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </Link>
@@ -123,7 +125,7 @@ export const Home = () => {
               )}
               <div className="absolute bottom-6 left-6 z-20">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[1]?.name}</h3>
-                <p className="font-technical-sm text-[10px] text-white/70">₦{featured[1]?.price?.toLocaleString() || ''}</p>
+                <p className="font-technical-sm text-[10px] text-white/70">{featured[1]?.price ? formatPrice(featured[1].price) : ''}</p>
               </div>
             </Link>
             <Link 
@@ -146,7 +148,7 @@ export const Home = () => {
               )}
               <div className="absolute bottom-6 left-6 z-20">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[2]?.name}</h3>
-                <p className="font-technical-sm text-[10px] text-white/70">₦{featured[2]?.price?.toLocaleString() || ''}</p>
+                <p className="font-technical-sm text-[10px] text-white/70">{featured[2]?.price ? formatPrice(featured[2].price) : ''}</p>
               </div>
             </Link>
           </div>
@@ -190,7 +192,7 @@ export const Home = () => {
                     <p className="font-technical-sm text-[10px] uppercase opacity-50 mb-1">{item.category}</p>
                     <h4 className="font-body font-bold uppercase tracking-wide text-sm">{item.name}</h4>
                   </div>
-                  <span className="font-technical-sm text-[10px] opacity-70">₦{item.price.toLocaleString()}</span>
+                  <span className="font-technical-sm text-[10px] opacity-70">{formatPrice(item.price)}</span>
                 </div>
               </Link>
             ))}

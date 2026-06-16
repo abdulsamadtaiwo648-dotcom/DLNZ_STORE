@@ -7,11 +7,13 @@ import { cn } from '../lib/utils';
 import { ShoppingBag, MessageSquare, X } from 'lucide-react';
 import { useAuth } from '../components/FirebaseProvider';
 import { useCart } from '../components/CartProvider';
+import { useCurrency } from '../components/CurrencyContext';
 import { WHATSAPP_LINK } from '../constants';
 
 
 export const Collections = () => {
   const { user } = useAuth();
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
@@ -175,7 +177,7 @@ export const Collections = () => {
                       <h4 className="font-display text-lg uppercase tracking-tight group-hover:text-brand-red transition-colors">{product.name}</h4>
                       <p className="font-technical-sm text-[10px] opacity-40 mt-1">{product.material || product.category}</p>
                     </div>
-                    <span className="font-technical-sm text-label-xs text-primary">₦{product.price.toLocaleString()}</span>
+                    <span className="font-technical-sm text-label-xs text-primary">{formatPrice(product.price)}</span>
                   </Link>
                 </motion.div>
               ))}

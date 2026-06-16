@@ -16,6 +16,7 @@ import { AnimatePresence } from 'motion/react';
 
 import { FirebaseProvider } from './components/FirebaseProvider';
 import { CartProvider } from './components/CartProvider';
+import { CurrencyProvider } from './components/CurrencyContext';
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -29,21 +30,23 @@ export default function App() {
   return (
     <Router>
       <FirebaseProvider>
-        <CartProvider>
-          <ScrollToTop />
-          <Layout>
-            <AnimatePresence mode="wait">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/collections" element={<Collections />} />
-                <Route path="/product/:id" element={<ProductDetail />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/tracking" element={<Tracking />} />
-                <Route path="/admin/*" element={<AdminDashboard />} />
-              </Routes>
-            </AnimatePresence>
-          </Layout>
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <ScrollToTop />
+            <Layout>
+              <AnimatePresence mode="wait">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/collections" element={<Collections />} />
+                  <Route path="/product/:id" element={<ProductDetail />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/tracking" element={<Tracking />} />
+                  <Route path="/admin/*" element={<AdminDashboard />} />
+                </Routes>
+              </AnimatePresence>
+            </Layout>
+          </CartProvider>
+        </CurrencyProvider>
       </FirebaseProvider>
     </Router>
   );

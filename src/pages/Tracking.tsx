@@ -6,9 +6,11 @@ import { orderService } from '../services/orderService';
 import { Order } from '../types';
 import { WHATSAPP_LINK } from '../constants';
 import { useAuth } from '../components/FirebaseProvider';
+import { useCurrency } from '../components/CurrencyContext';
 
 export const Tracking = () => {
   const { user, setIsAuthModalOpen } = useAuth();
+  const { formatPrice } = useCurrency();
   const [orderIdInput, setOrderIdInput] = useState('');
   const [activeOrderId, setActiveOrderId] = useState('');
   const [order, setOrder] = useState<Order | null>(null);
@@ -267,7 +269,7 @@ export const Tracking = () => {
                     <p className="font-technical-sm text-[10px] opacity-40 uppercase">Recipient: {order.customerName}</p>
                     <p className="font-technical-sm text-[10px] opacity-40 uppercase">Loyalty Status: Verified Account</p>
                   </div>
-                  <p className="font-technical-sm text-sm">₦ {order.amount.toLocaleString()}</p>
+                  <p className="font-technical-sm text-sm">{formatPrice(order.amount)}</p>
                </div>
 
                <div className="mt-20 bg-surface-container p-10 space-y-8">
@@ -383,7 +385,7 @@ export const Tracking = () => {
                       <td className="p-4 md:p-5 font-mono text-brand-ring hover:text-brand-red transition-colors select-all font-semibold" title="Copy tracking code">
                         {itm.tracking || 'TRK-PENDING'}
                       </td>
-                      <td className="p-4 md:p-5 font-bold text-white">₦{itm.amount.toLocaleString()}</td>
+                      <td className="p-4 md:p-5 font-bold text-white">{formatPrice(itm.amount)}</td>
                       <td className="p-4 md:p-5">
                         <span className={cn(
                           "px-2.5 py-1 text-[9px] font-bold tracking-widest font-technical",

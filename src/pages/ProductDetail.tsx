@@ -7,12 +7,14 @@ import { cn } from '../lib/utils';
 import { MessageSquare, Heart, ChevronDown, Plus, ShoppingBag, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../components/FirebaseProvider';
 import { useCart } from '../components/CartProvider';
+import { useCurrency } from '../components/CurrencyContext';
 import { WHATSAPP_LINK } from '../constants';
 
 export const ProductDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -58,7 +60,7 @@ export const ProductDetail = () => {
     
 Product: ${product.name}
 SKU: ${product.sku}
-Price: ₦${product.price.toLocaleString()}
+Price: ${formatPrice(product.price)}
 Size: ${selectedSize}
 Color/Finish: ${colorFinishName.toUpperCase()}
 User: ${user?.email || 'Guest'}
@@ -185,7 +187,7 @@ Please confirm availability and payment details.`;
               {product.limited && <span className="font-technical-sm text-[10px] text-brand-red font-bold">LIMITED EDITION</span>}
             </div>
             <h1 className="font-display text-4xl md:text-5xl uppercase leading-none mb-4">{product.name}</h1>
-            <div className="font-display text-3xl text-primary tracking-tighter">₦{product.price.toLocaleString()}</div>
+            <div className="font-display text-3xl text-primary tracking-tighter">{formatPrice(product.price)}</div>
           </header>
 
           <div className="space-y-6">
@@ -317,7 +319,7 @@ Please confirm availability and payment details.`;
                    </div>
                    <div className="space-y-1">
                       <h4 className="font-technical-sm text-[10px] tracking-widest group-hover:text-brand-red transition-colors">{item.name}</h4>
-                      <p className="font-technical-sm text-[10px] opacity-40">₦{item.price.toLocaleString()}</p>
+                      <p className="font-technical-sm text-[10px] opacity-40">{formatPrice(item.price)}</p>
                    </div>
                  </Link>
               ))}

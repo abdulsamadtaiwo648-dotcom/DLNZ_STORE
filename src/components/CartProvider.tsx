@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Product, CartItem } from '../types';
 import { useAuth } from './FirebaseProvider';
 import { orderService } from '../services/orderService';
+import { useCurrency } from './CurrencyContext';
 import { WHATSAPP_LINK } from '../constants';
 import { cn } from '../lib/utils';
 
@@ -23,6 +24,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, setIsAuthModalOpen } = useAuth();
+  const { formatPrice } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -130,7 +132,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const cartSummary = cart.map(
-      item => `- ${item.product.name} [Size: ${item.selectedSize}${item.selectedColor ? `, Finish: ${item.selectedColor.toUpperCase()}` : ''}] x ${item.quantity} = ₦${(item.product.price * item.quantity).toLocaleString()}`
+      item => `- ${item.product.name} [Size: ${item.selectedSize}${item.selectedColor ? `, Finish: ${item.selectedColor.toUpperCase()}` : ''}] x ${item.quantity} = ${formatPrice(item.product.price * item.quantity)}`
     ).join('\n');
 
     const orderIdString = orderId ? ` (Order ID: ${orderId})` : '';
@@ -139,7 +141,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 ${cartSummary}
 
-Subtotal: ₦${subtotal.toLocaleString()}
+Subtotal: ${formatPrice(subtotal)}
 Customer: ${customerName || user?.displayName || 'Guest'} (${customerEmail || user?.email || 'N/A'})
 Shipping: ${shippingAddress || 'To be specified'}
 
@@ -373,7 +375,7 @@ Please advise on carrier scheduling and completion of purchase.`;
                                 <Plus className="w-3 h-3" />
                               </button>
                             </div>
-                            <span className="font-technical text-xs text-primary">₦{(item.product.price * item.quantity).toLocaleString()}</span>
+                            <span className="font-technical text-xs text-primary">{formatPrice(item.product.price * item.quantity)}</span>
                           </div>
                         </div>
                       </motion.div>
@@ -483,7 +485,7 @@ Please advise on carrier scheduling and completion of purchase.`;
                 <div className="p-8 border-t border-outline-variant/30 bg-brand-charcoal space-y-6">
                   <div className="flex justify-between items-center">
                     <span className="font-technical-sm text-[10px] uppercase opacity-40 tracking-[0.2em]">Estimated Total</span>
-                    <span className="font-display text-2xl text-primary font-bold">₦{subtotal.toLocaleString()}</span>
+                    <span className="font-display text-2xl text-primary font-bold">{formatPrice(subtotal)}</span>
                   </div>
 
                   {!isCheckingOut ? (

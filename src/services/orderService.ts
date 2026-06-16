@@ -135,6 +135,27 @@ export const orderService = {
       };
       await setDoc(docRef, data);
       
+      // Trigger order confirmation email dispatch in server backend (non-blocking)
+      fetch('/api/orders/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+          orderId: id, 
+          order: {
+            ...order,
+            date: formattedDate
+          } 
+        })
+      }).then(r => r.json())
+        .then(res => {
+          console.log('Order notification email dispatch completed:', res);
+        })
+        .catch(err => {
+          console.warn('Unable to notify email api:', err);
+        });
+
       // Update cache
       const all = await this.getAllOrders().catch(() => []);
       const newOrder = { id, ...order, date: formattedDate, createdAt: new Date().toISOString() };

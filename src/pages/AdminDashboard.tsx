@@ -4,15 +4,194 @@ import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 
 import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { Product, Order } from '../types';
-import { Download, Edit2, Trash2, Plus, Search, Lock, Database, ShieldAlert, KeyRound, ArrowRight } from 'lucide-react';
+import { Download, Edit2, Trash2, Plus, Search, Lock, Database, ShieldAlert, KeyRound, ArrowRight, X, FileSpreadsheet, Calendar } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../components/FirebaseProvider';
+import { useCurrency } from '../components/CurrencyContext';
 import { ProductModal } from '../components/admin/ProductModal';
+import { ReportModal } from '../components/admin/ReportModal';
+import { motion, AnimatePresence } from 'motion/react';
 
 const DashboardHome = ({ products, orders }: { products: Product[], orders: Order[] }) => {
+  const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  
+  // Year & Month selection states
+  const [selectedYear, setSelectedYear] = useState<number>(() => new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState<number>(() => new Date().getMonth());
+  const [reportType, setReportType] = useState<'all' | 'year' | 'month'>('all');
+
   const totalRevenue = orders
     .filter(o => o.status !== 'Hold')
     .reduce((sum, o) => sum + (o.amount || 0), 0);
+
+  const getOrderYearAndMonth = (dateStr: string): { year: number; month: number } | null => {
+    if (!dateStr) return null;
+    const normalized = dateStr.replace(/\bat\b/gi, '').replace(/\s+/g, ' ').trim();
+    const d = new Date(normalized);
+    if (!isNaN(d.getTime())) {
+      return { year: d.getFullYear(), month: d.getMonth() };
+    }
+    try {
+      const cleanLower = normalized.toLowerCase();
+      const yearMatch = cleanLower.match(/\b(20\d{2})\b/);
+      if (!yearMatch) return null;
+      const yearNum = parseInt(yearMatch[1], 10);
+      
+      const monthMap: Record<string, number> = {
+        jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+        jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+      };
+      
+      for (const [key, value] of Object.entries(monthMap)) {
+        if (cleanLower.includes(key)) {
+          return { year: yearNum, month: value };
+        }
+      }
+    } catch (err) {}
+    return null;
+  };
+
+  const MONTHS_LIST = [
+    { value: 0, label: 'January' },
+    { value: 1, label: 'February' },
+    { value: 2, label: 'March' },
+    { value: 3, label: 'April' },
+    { value: 4, label: 'May' },
+    { value: 5, label: 'June' },
+    { value: 6, label: 'July' },
+    { value: 7, label: 'August' },
+    { value: 8, label: 'September' },
+    { value: 9, label: 'October' },
+    { value: 10, label: 'November' },
+    { value: 11, label: 'December' },
+  ];
+
+  // Dynamically extract all unique years from orders
+  const availableYears = React.useMemo(() => {
+    const yearsSet = new Set<number>();
+    yearsSet.add(new Date().getFullYear()); // Ensure current year is always an option
+    orders.forEach(o => {
+      const parsed = getOrderYearAndMonth(o.date);
+      if (parsed) {
+        yearsSet.add(parsed.year);
+      }
+    });
+    return Array.from(yearsSet).sort((a, b) => b - a);
+  }, [orders]);
+
+  // Dynamically filter matching orders based on chosen parameters
+  const filteredOrdersForReport = React.useMemo(() => {
+    return orders.filter(o => {
+      if (reportType === 'all') return true;
+      const parsed = getOrderYearAndMonth(o.date);
+      if (!parsed) return false;
+      
+      if (reportType === 'year') {
+        return parsed.year === selectedYear;
+      }
+      if (reportType === 'month') {
+        return parsed.year === selectedYear && parsed.month === selectedMonth;
+      }
+      return true;
+    });
+  }, [orders, reportType, selectedYear, selectedMonth]);
+
+  const handleDownloadCSV = () => {
+    const headers = [
+      'Order ID',
+      'Date/Time',
+      'Customer Name',
+      'Customer Email',
+      'Status',
+      'Gross Amount (NGN)',
+      `Converted Amount (${selectedCurrency?.code || 'USD'})`,
+      'Currency Symbol',
+      'Tracking ID'
+    ];
+
+    const rows = filteredOrdersForReport.map(o => {
+      const converted = convertPrice ? convertPrice(o.amount) : o.amount;
+      const currencySymbol = selectedCurrency ? selectedCurrency.symbol : '₦';
+      return [
+        o.id,
+        o.date || 'N/A',
+        o.customerName || 'Guest',
+        o.customerEmail || 'N/A',
+        o.status,
+        o.amount.toString(),
+        converted.toFixed(2),
+        currencySymbol,
+        o.tracking || 'TRK-PENDING'
+      ];
+    });
+
+    const totalNgnSum = filteredOrdersForReport.reduce((acc, o) => acc + o.amount, 0);
+    const totalConvSum = filteredOrdersForReport.reduce((acc, o) => acc + (convertPrice ? convertPrice(o.amount) : o.amount), 0);
+    const activeCurrencyCode = selectedCurrency ? selectedCurrency.code : 'NGN';
+
+    if (reportType === 'all' || reportType === 'year') {
+      rows.push([]);
+      rows.push(['MONTH-BY-MONTH REVENUE BREAKDOWN']);
+      rows.push(['Month', 'Transactions Count', 'Gross Revenue (Base NGN)', `Gross Revenue (${activeCurrencyCode})`]);
+
+      MONTHS_LIST.forEach(m => {
+        const monthOrders = filteredOrdersForReport.filter(o => {
+          const parsed = getOrderYearAndMonth(o.date);
+          return parsed && parsed.month === m.value;
+        });
+
+        const activeMonthOrders = monthOrders.filter(o => o.status !== 'Cancelled' && o.status !== 'Hold');
+        const mNgnSum = activeMonthOrders.reduce((sum, o) => sum + o.amount, 0);
+        const mConvSum = activeMonthOrders.reduce((sum, o) => sum + (convertPrice ? convertPrice(o.amount) : o.amount), 0);
+
+        rows.push([
+          m.label,
+          monthOrders.length.toString(),
+          `₦ ${mNgnSum.toLocaleString()}`,
+          `${selectedCurrency?.symbol || ''} ${mConvSum.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        ]);
+      });
+    }
+
+    rows.push([]);
+    rows.push(['FINANCIAL AUDIT SUMMARY']);
+    rows.push(['Total Transaction Volume', filteredOrdersForReport.length.toString()]);
+    rows.push(['Total Revenue (NGN)', `₦ ${totalNgnSum.toLocaleString()}`]);
+    rows.push([`Total Revenue (${activeCurrencyCode})`, `${selectedCurrency?.symbol || ''} ${totalConvSum.toLocaleString(undefined, { minimumFractionDigits: 2 })}`]);
+    rows.push(['Accountable Margin Rate', '100%']);
+    rows.push(['Generated Signature Log', `DLNZ_REPORT_PORTAL_${new Date().toISOString()}`]);
+
+    let fName = 'DLNZ-Store-Audit-Full-Report.csv';
+    if (reportType === 'year') {
+      fName = `DLNZ-Store-Audit-Year-Ending-${selectedYear}.csv`;
+    } else if (reportType === 'month') {
+      const monthLabel = MONTHS_LIST[selectedMonth]?.label || 'Month';
+      fName = `DLNZ-Store-Audit-${monthLabel}-${selectedYear}.csv`;
+    }
+
+    const content = [
+      headers.join(','),
+      ...rows.map(row => row.map(val => {
+        const valStr = String(val === undefined || val === null ? '' : val).replace(/"/g, '""');
+        if (valStr.includes(',') || valStr.includes('\n') || valStr.includes('"')) {
+          return `"${valStr}"`;
+        }
+        return valStr;
+      }).join(','))
+    ].join('\n');
+
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', fName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsReportModalOpen(false);
+  };
 
   const dynamicStats = React.useMemo(() => {
     const dailyMap: { [key: string]: number } = {};
@@ -53,7 +232,10 @@ const DashboardHome = ({ products, orders }: { products: Product[], orders: Orde
             <span className="font-technical-sm text-[10px] text-primary mb-3 block tracking-widest opacity-60">DRIVEN LIVES, NEW ZONE. / STATUS: OPERATIONAL</span>
             <h1 className="font-display text-4xl md:text-8xl uppercase leading-none">Management</h1>
           </div>
-          <button className="bg-primary text-on-primary px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:bg-white w-full lg:w-auto justify-center">
+          <button 
+            onClick={() => setIsReportModalOpen(true)}
+            className="bg-primary text-on-primary px-8 py-4 font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center gap-3 active:scale-95 transition-all hover:bg-white w-full lg:w-auto justify-center cursor-pointer"
+          >
             <Download className="w-4 h-4" />
             Download Report
           </button>
@@ -92,7 +274,7 @@ const DashboardHome = ({ products, orders }: { products: Product[], orders: Orde
 
           <div className="mt-10">
             <p className="font-display text-4xl md:text-5xl text-primary leading-none font-bold text-white">
-              ₦{totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              {formatPrice(totalRevenue)}
             </p>
             <p className="font-technical-sm text-[10px] uppercase opacity-40 mt-2 tracking-widest">CALCULATED DYNAMICALLY FROM LIVE TRANSACTIONS</p>
           </div>
@@ -119,6 +301,184 @@ const DashboardHome = ({ products, orders }: { products: Product[], orders: Orde
           </div>
         </div>
       </section>
+
+      {/* Luxury Report Selection Modal Backdrop Overlay */}
+      <AnimatePresence>
+        {isReportModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 sm:p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="bg-neutral-950 border border-outline-variant/30 max-w-xl w-full p-8 md:p-10 relative overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Subtle top ambient crimson mesh light effect */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-red to-transparent opacity-60" />
+
+              {/* Title Section */}
+              <div className="flex justify-between items-start mb-8 pb-4 border-b border-outline-variant/20">
+                <div>
+                  <span className="font-technical-sm text-[8px] text-brand-red tracking-widest uppercase block mb-1">Financial Reconciliation Portal</span>
+                  <h3 className="font-display text-2xl uppercase tracking-tight">Ledger Compilation</h3>
+                </div>
+                <button 
+                  onClick={() => setIsReportModalOpen(false)} 
+                  className="text-[#999999] hover:text-white p-1.5 hover:bg-neutral-900/50 transition-colors border border-transparent hover:border-outline-variant/20 rounded-sm cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* 1. Report Scope Selection */}
+                <div>
+                  <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-3 font-mono">Select Report Scope</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => setReportType('all')}
+                      className={cn(
+                        "p-3.5 border text-center transition-all duration-300 font-technical-sm text-[9px] uppercase tracking-wider cursor-pointer",
+                        reportType === 'all'
+                          ? "bg-primary text-on-primary border-primary font-bold"
+                          : "border-outline-variant/20 bg-neutral-900/30 text-[#aaaaaa] hover:border-[#666666] hover:text-white"
+                      )}
+                    >
+                      All-Time History
+                    </button>
+                    <button
+                      onClick={() => setReportType('year')}
+                      className={cn(
+                        "p-3.5 border text-center transition-all duration-300 font-technical-sm text-[9px] uppercase tracking-wider cursor-pointer",
+                        reportType === 'year'
+                          ? "bg-primary text-on-primary border-primary font-bold"
+                          : "border-outline-variant/20 bg-neutral-900/30 text-[#aaaaaa] hover:border-[#666666] hover:text-white"
+                      )}
+                    >
+                      Year Ending
+                    </button>
+                    <button
+                      onClick={() => setReportType('month')}
+                      className={cn(
+                        "p-3.5 border text-center transition-all duration-300 font-technical-sm text-[9px] uppercase tracking-wider cursor-pointer",
+                        reportType === 'month'
+                          ? "bg-primary text-on-primary border-primary font-bold"
+                          : "border-outline-variant/20 bg-neutral-900/30 text-[#aaaaaa] hover:border-[#666666] hover:text-white"
+                      )}
+                    >
+                      Monthly Detailed
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Parameters Select Dropdowns (only shown if not 'all-time') */}
+                {reportType !== 'all' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-2 font-mono">Target Year</label>
+                      <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        className="w-full bg-[#0d0d0d] border border-outline-variant/30 text-white px-3 py-3 text-[11px] font-technical-sm tracking-widest focus:border-brand-red focus:outline-none uppercase cursor-pointer"
+                      >
+                        {availableYears.map(y => (
+                          <option key={y} value={y} className="bg-black text-white">{y} Account Cycle</option>
+                        ))}
+                      </select>
+                    </div>
+                    {reportType === 'month' && (
+                      <div>
+                        <label className="block text-[10px] uppercase text-[#8e8e8e] tracking-wider mb-2 font-mono">Target Month</label>
+                        <select
+                          value={selectedMonth}
+                          onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                          className="w-full bg-[#0d0d0d] border border-outline-variant/30 text-white px-3 py-3 text-[11px] font-technical-sm tracking-widest focus:border-brand-red focus:outline-none uppercase cursor-pointer"
+                        >
+                          {MONTHS_LIST.map(m => (
+                            <option key={m.value} value={m.value} className="bg-black text-white">{m.label.toUpperCase()}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 3. Live Preview & Audit Statistics Area */}
+                <div className="bg-neutral-900/40 border border-outline-variant/20 p-5 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-brand-red rounded-full animate-pulse" />
+                    <span className="font-technical-sm text-[8px] text-[#aeaeae] tracking-widest uppercase font-mono">Pre-Compilation Check (Live Database)</span>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-[9px] text-[#717171] uppercase tracking-wider font-mono">Scope Transactions</p>
+                      <p className="font-display text-2xl text-white mt-1">
+                        {filteredOrdersForReport.length} <span className="text-[10px] uppercase font-technical opacity-40 ml-1">Logs</span>
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-[#717171] uppercase tracking-wider font-mono">Gross Revenue</p>
+                      <p className="font-display text-2xl text-brand-red mt-1 font-bold">
+                        {formatPrice(filteredOrdersForReport.reduce((sum, o) => sum + o.amount, 0))}
+                      </p>
+                    </div>
+                  </div>
+
+                  {filteredOrdersForReport.length > 0 ? (
+                    <div className="pt-3 border-t border-outline-variant/10 text-[9px] text-[#8c8c8c] flex flex-col gap-1.5 font-mono">
+                      <div className="flex justify-between">
+                        <span>AVERAGE ORDER VALUE:</span>
+                        <span className="text-white font-bold">
+                          {formatPrice(filteredOrdersForReport.reduce((sum, o) => sum + o.amount, 0) / filteredOrdersForReport.length)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>SYSTEM EXCHANGE TARGET:</span>
+                        <span className="text-white uppercase font-bold">
+                          1 {selectedCurrency?.code || 'NGN'} = {selectedCurrency?.symbol || '₦'}{(1 * (selectedCurrency?.rate || 1)).toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="pt-2 border-t border-outline-variant/10 text-center text-[9px] text-brand-red font-mono uppercase tracking-widest leading-relaxed">
+                      ⚠️ No live transaction logs found aligning with this scope in FireStore database
+                    </div>
+                  )}
+                </div>
+
+                <div className="text-[9px] text-[#6b6b6b] leading-relaxed font-sans">
+                  * Generated reports comply strictly with financial ledger guidelines. The download file features both primary NGN values alongside the active currency conversion values tracking your currency switcher selection.
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-6 border-t border-outline-variant/20 mt-8 flex flex-col sm:flex-row justify-end gap-3">
+                <button
+                  onClick={() => setIsReportModalOpen(false)}
+                  className="px-6 py-3.5 border border-outline-variant/30 text-[#888] hover:text-white hover:border-white transition-all font-technical-sm text-[9px] uppercase tracking-widest cursor-pointer bg-transparent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDownloadCSV}
+                  disabled={filteredOrdersForReport.length === 0}
+                  className="px-6 py-3.5 bg-[#8B0000] text-white hover:bg-red-700 disabled:opacity-40 transition-all font-technical-sm text-[10px] uppercase tracking-widest font-bold flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Download CSV Compilation
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
@@ -137,7 +497,9 @@ const InventoryManagement = ({
   onDeleteProduct: (p: Product) => void,
   onSeed: () => void,
   seedingLoading: boolean
-}) => (
+}) => {
+  const { formatPrice } = useCurrency();
+  return (
   <>
     {/* Sub-Header */}
     <section className="mb-16">
@@ -185,7 +547,7 @@ const InventoryManagement = ({
                  </div>
                  <h4 className="font-body font-bold uppercase tracking-tight text-sm mb-6">{product.name}</h4>
                  <div className="flex justify-between items-center">
-                    <span className="font-technical-sm text-xs">₦ {product.price.toLocaleString()}</span>
+                    <span className="font-technical-sm text-xs">{formatPrice(product.price)}</span>
                     <div className="flex gap-4">
                        <button 
                         onClick={() => onEditProduct(product)}
@@ -214,9 +576,12 @@ const InventoryManagement = ({
      </div>
   </section>
   </>
-);
+  );
+};
 
-const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdateStatus: (id: string, status: Order['status']) => void }) => (
+const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdateStatus: (id: string, status: Order['status']) => void }) => {
+  const { formatPrice } = useCurrency();
+  return (
   <>
     {/* Sub-Header */}
     <section className="mb-16">
@@ -254,7 +619,7 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
                       <p className="font-technical text-[10px] opacity-40 lowercase">{order.customerEmail}</p>
                    </td>
                    <td className="p-6 font-technical-sm text-[10px] opacity-60 uppercase">{order.date}</td>
-                   <td className="p-6 font-technical-sm text-sm">₦ {order.amount.toLocaleString()}</td>
+                   <td className="p-6 font-technical-sm text-sm">{formatPrice(order.amount)}</td>
                    <td className="p-6">
                       <span className={cn(
                         "px-3 py-1 text-[8px] font-technical-sm uppercase tracking-widest",
@@ -287,7 +652,8 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
      </div>
   </section>
   </>
-);
+  );
+};
 
 export const AdminDashboard = () => {
   const { 
