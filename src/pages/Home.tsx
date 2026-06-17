@@ -96,7 +96,7 @@ export const Home = () => {
                 src={featured[0]?.hoverImage} 
               />
             )}
-            <div className="absolute bottom-10 left-10 z-20 flex flex-col items-start">
+            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-10 md:left-10 z-20 flex flex-col items-start">
               <p className="font-technical-sm text-[10px] bg-black/80 text-white px-3 py-1 mb-3 inline-block">SS24-JK01</p>
               <h3 className="font-display text-3xl md:text-4xl text-white uppercase group-hover:text-brand-red transition-colors">{featured[0]?.name}</h3>
               <div className="flex items-center gap-2 mt-2">
@@ -129,7 +129,7 @@ export const Home = () => {
                   src={featured[1]?.hoverImage} 
                 />
               )}
-              <div className="absolute bottom-6 left-6 z-20 flex flex-col items-start">
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 flex flex-col items-start">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[1]?.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-technical-sm text-[10px] text-white/70">{featured[1]?.price ? formatPrice(featured[1].price) : ''}</span>
@@ -157,7 +157,7 @@ export const Home = () => {
                   src={featured[2]?.hoverImage} 
                 />
               )}
-              <div className="absolute bottom-6 left-6 z-20 flex flex-col items-start">
+              <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 z-20 flex flex-col items-start">
                 <h3 className="font-technical-sm text-label-xs text-white uppercase font-bold group-hover:text-brand-red transition-colors">{featured[2]?.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-technical-sm text-[10px] text-white/70">{featured[2]?.price ? formatPrice(featured[2].price) : ''}</span>

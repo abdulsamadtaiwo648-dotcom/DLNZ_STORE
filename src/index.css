@@ -2,6 +2,33 @@
 @import "tailwindcss";
 
 @theme {
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-surface-bright: var(--color-surface-bright);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-inverse-surface: var(--color-inverse-surface);
+  --color-inverse-on-surface: var(--color-inverse-on-surface);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
+  --color-brand-red: #8B0000;
+  --color-brand-stone: var(--color-brand-stone);
+  --color-brand-charcoal: var(--color-brand-charcoal);
+  --color-brand-silver: var(--color-brand-silver);
+
+  --font-display: "Montserrat", ui-sans-serif, system-ui;
+  --font-technical: "Space Mono", ui-monospace;
+  --font-body: "Hanken Grotesk", ui-sans-serif;
+}
+
+:root {
   --color-surface: #131313;
   --color-surface-dim: #131313;
   --color-surface-bright: #393939;
@@ -18,14 +45,31 @@
   --color-outline-variant: #4c4546;
   --color-primary: #c6c6c6;
   --color-on-primary: #303030;
-  --color-brand-red: #8B0000;
   --color-brand-stone: #E5E4E2;
   --color-brand-charcoal: #1A1A1A;
   --color-brand-silver: #C0C0C0;
+}
 
-  --font-display: "Montserrat", ui-sans-serif, system-ui;
-  --font-technical: "Space Mono", ui-monospace;
-  --font-body: "Hanken Grotesk", ui-sans-serif;
+:root.light {
+  --color-surface: #faf9f6;
+  --color-surface-dim: #f3f1eb;
+  --color-surface-bright: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f5f4ef;
+  --color-surface-container: #ebeae4;
+  --color-surface-container-high: #dfded7;
+  --color-surface-container-highest: #d2d0c8;
+  --color-on-surface: #111111;
+  --color-on-surface-variant: #444444;
+  --color-inverse-surface: #111111;
+  --color-inverse-on-surface: #ffffff;
+  --color-outline: #6e6d68;
+  --color-outline-variant: #dad8cc;
+  --color-primary: #1c1c1c;
+  --color-on-primary: #ffffff;
+  --color-brand-stone: #111111;
+  --color-brand-charcoal: #f0efe9;
+  --color-brand-silver: #444444;
 }
 
 @layer base {

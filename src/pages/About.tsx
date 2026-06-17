@@ -53,7 +53,7 @@ export const About = () => {
             <div className="md:col-span-8 relative overflow-hidden border border-outline-variant/20 group">
                <img className="w-full h-full object-cover grayscale transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpX6bpX_GoIToRcklFkoZ_ZJtDyPjFbkJX6C7N9iiVV_XPrnGgSU7o1p3JsvbwPXDIJ579NmCOt-ZFhWIHXU7QWjUl2cHIJY5BcOIhGsNlwK1ioZaGEztf3BfOsieYSIiSx7CYNdgRpTtsYCoVDZEYjYDHn9g4gYEZJByU-mgFID81VNFfNdsyZepRZmwgrO8Ig42bV4Oo-0Xb5oOwVNQc9l7Z-aYRycK2TBLTlopNlghfUdcCK-fJ7sWYYxqsLIc_NXf-SNgmKsI" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-               <div className="absolute bottom-10 left-10 max-w-sm">
+               <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 md:bottom-10 md:left-10 max-w-sm text-left">
                   <p className="font-technical-sm text-[10px] mb-3 opacity-60">INTERNAL STRUCTURE</p>
                   <p className="font-body text-sm leading-relaxed">Every seam is reinforced with double-bonded technical nylon for longevity and structural integrity.</p>
                </div>
@@ -75,7 +75,7 @@ export const About = () => {
          </div>
       </section>
 
-      <section className="py-40 bg-black text-center border-t border-outline-variant/10">
+      <section className="py-40 bg-surface-container-lowest text-center border-t border-outline-variant/10">
          <div className="max-w-3xl mx-auto px-6">
             <h2 className="font-display text-4xl md:text-7xl uppercase leading-[0.9] mb-16">
                The Collection<br />

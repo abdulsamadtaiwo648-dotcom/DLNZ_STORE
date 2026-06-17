@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Search, ShoppingBag, X, User as UserIcon, LogOut } from 'lucide-react';
+import { Menu, Search, ShoppingBag, X, User as UserIcon, LogOut, Sun, Moon } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
 import { Logo } from './Logo';
 import { useAuth } from './FirebaseProvider';
 import { useCart } from './CartProvider';
+import { useTheme } from './ThemeContext';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,6 +18,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { user, logout, isAdmin: isUserAdmin, setIsAuthModalOpen } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
+  const { theme, toggleTheme } = useTheme();
 
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -57,7 +59,7 @@ export const Navbar = () => {
   if (isAdmin) return null;
 
   return (
-    <header className="fixed top-0 w-full z-50 bg-[#0c0c0c] border-b border-outline-variant/30 px-3 sm:px-6 md:px-16 h-16 flex justify-between items-center shadow-lg">
+    <header className="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant/30 px-3 sm:px-6 md:px-16 h-16 flex justify-between items-center shadow-lg">
       <div className="flex items-center gap-2 sm:gap-4">
         <button 
           onClick={() => setIsOpen(true)}
@@ -85,7 +87,10 @@ export const Navbar = () => {
 
       <Link 
         to="/" 
-        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group transition-all duration-300"
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2 flex flex-col items-center group transition-all duration-300",
+          isSearchOpen ? "hidden md:flex" : "flex"
+        )}
       >
         <Logo size="sm" />
       </Link>
@@ -128,7 +133,7 @@ export const Navbar = () => {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 top-full mt-2 bg-[#0c0c0c] border border-outline-variant/30 py-2 w-[130px] sm:w-[180px] shadow-2xl z-50 flex flex-col"
+                    className="absolute right-0 top-full mt-2 bg-surface-container-lowest border border-outline-variant/30 py-2 w-[130px] sm:w-[180px] shadow-2xl z-50 flex flex-col"
                   >
                     <div className="px-2 sm:px-3 pb-1 border-b border-outline-variant/10 mb-1">
                       <span className="font-technical-sm text-[6.5px] sm:text-[7.5px] uppercase tracking-widest opacity-40 font-bold block">
@@ -158,6 +163,18 @@ export const Navbar = () => {
             )}
           </AnimatePresence>
         </div>
+
+        <button 
+          onClick={toggleTheme}
+          className="text-primary hover:scale-105 active:scale-95 transition-transform p-1 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center relative focus:outline-none cursor-pointer"
+          title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {theme === 'dark' ? (
+            <Sun className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+          ) : (
+            <Moon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
+          )}
+        </button>
 
         <button 
           onClick={() => {
@@ -202,11 +219,11 @@ export const Navbar = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 left-0 h-full w-80 bg-black z-50 border-r border-outline-variant/30 p-10 flex flex-col shadow-2xl"
+              className="fixed top-0 left-0 h-full w-80 bg-surface-container-lowest z-50 border-r border-outline-variant/30 p-10 flex flex-col shadow-2xl"
             >
               <button 
                 onClick={() => setIsOpen(false)}
-                className="absolute top-6 right-6 text-primary hover:text-brand-red hover:scale-110 active:scale-95 transition-all"
+                className="absolute top-6 right-6 text-primary hover:text-brand-red hover:scale-110 active:scale-95 transition-all cursor-pointer"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -217,13 +234,23 @@ export const Navbar = () => {
                     key={link.label}
                     to={link.href}
                     onClick={() => setIsOpen(false)}
-                    className="font-display text-4xl uppercase tracking-tighter hover:text-brand-red transition-colors text-white"
+                    className="font-display text-4xl uppercase tracking-tighter hover:text-brand-red transition-colors text-on-surface"
                   >
                     {link.label}
                   </Link>
                 ))}
                 
                 <div className="mt-auto pt-10 border-t border-outline-variant/30 flex flex-col gap-6">
+                  <button 
+                    onClick={() => {
+                      toggleTheme();
+                      setIsOpen(false);
+                    }}
+                    className="flex items-center gap-2 font-technical-sm text-label-xs uppercase tracking-widest text-on-surface hover:text-brand-red transition-colors cursor-pointer"
+                  >
+                    {theme === 'dark' ? <Sun className="w-4 h-4 text-brand-red" /> : <Moon className="w-4 h-4 text-brand-red" />}
+                    {theme === 'dark' ? "LIGHT PROTOCOL" : "DARK PROTOCOL"}
+                  </button>
                   {user ? (
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-3">

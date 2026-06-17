@@ -10,7 +10,7 @@ export const Footer = () => {
   const isAdminPath = location.pathname.startsWith('/admin');
 
   return (
-    <footer className={`bg-black border-t border-outline-variant/20 px-6 md:px-16 py-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-12 ${isAdminPath && isUserAdmin ? 'md:ml-80' : ''}`}>
+    <footer className={`bg-surface-container-lowest border-t border-outline-variant/20 px-6 md:px-16 py-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-12 ${isAdminPath && isUserAdmin ? 'md:ml-80' : ''}`}>
       <div className="flex flex-col gap-6">
         <Logo size="sm" className="items-start" />
         <p className="font-technical-sm text-label-xs text-brand-silver opacity-60 max-w-sm">
