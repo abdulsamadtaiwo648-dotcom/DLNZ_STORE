@@ -9,6 +9,7 @@ import { useAuth } from '../components/FirebaseProvider';
 import { useCart } from '../components/CartProvider';
 import { useCurrency } from '../components/CurrencyContext';
 import { WHATSAPP_LINK } from '../constants';
+import { ProductCurrencyDropdown } from '../components/ProductCurrencyDropdown';
 
 
 export const Collections = () => {
@@ -222,19 +223,7 @@ export const Collections = () => {
                     </Link>
                     <div className="flex flex-col items-end gap-1.5 ml-4">
                       <span className="font-technical-sm text-label-xs text-primary whitespace-nowrap">{formatPrice(product.price)}</span>
-                      <select
-                        value={currencyCode}
-                        onChange={(e) => {
-                          setCurrency(e.target.value as any);
-                        }}
-                        className="text-[8px] font-technical-sm text-on-surface-variant hover:text-white border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] px-1.5 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
-                        title="Select Currency Protocol"
-                      >
-                        <option value="NGN">NGN ₦</option>
-                        <option value="USD">USD $</option>
-                        <option value="EUR">EUR €</option>
-                        <option value="GBP">GBP £</option>
-                      </select>
+                      <ProductCurrencyDropdown darkBg={false} />
                     </div>
                   </div>
                 </motion.div>

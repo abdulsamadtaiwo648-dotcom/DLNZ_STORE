@@ -16,6 +16,7 @@ import {
 import { useAuth } from "../components/FirebaseProvider";
 import { useCart } from "../components/CartProvider";
 import { useCurrency } from "../components/CurrencyContext";
+import { ProductCurrencyDropdown } from "../components/ProductCurrencyDropdown";
 import { WHATSAPP_LINK } from "../constants";
 
 export const ProductDetail = () => {
@@ -228,19 +229,7 @@ Please confirm availability and payment details.`;
               <div className="font-display text-3xl text-primary tracking-tighter">
                 {formatPrice(product.price)}
               </div>
-              <select
-                value={currencyCode}
-                onChange={(e) => {
-                  setCurrency(e.target.value as any);
-                }}
-                className="flex items-center gap-1.5 px-2 py-1 font-technical-sm text-[8.5px] uppercase tracking-wider text-primary hover:text-brand-red border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] transition-all duration-300 focus:outline-none cursor-pointer select-none outline-none [color-scheme:dark]"
-                title="Select Currency Protocol"
-              >
-                <option value="NGN">NGN ₦</option>
-                <option value="USD">USD $</option>
-                <option value="EUR">EUR €</option>
-                <option value="GBP">GBP £</option>
-              </select>
+              <ProductCurrencyDropdown darkBg={false} />
             </div>
           </header>
 
@@ -401,23 +390,7 @@ Please confirm availability and payment details.`;
                       {formatPrice(item.price)}
                     </p>
                   </div>
-                  <select
-                    value={currencyCode}
-                    onChange={(e) => {
-                      setCurrency(e.target.value as any);
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    className="text-[7.5px] font-technical-sm text-on-surface-variant hover:text-white border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] px-1.5 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark] ml-2"
-                    title="Select Currency Protocol"
-                  >
-                    <option value="NGN">NGN ₦</option>
-                    <option value="USD">USD $</option>
-                    <option value="EUR">EUR €</option>
-                    <option value="GBP">GBP £</option>
-                  </select>
+                  <ProductCurrencyDropdown darkBg={false} className="ml-2" />
                 </div>
               </Link>
             ))}

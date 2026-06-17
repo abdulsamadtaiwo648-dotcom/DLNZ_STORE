@@ -6,6 +6,7 @@ import { Product } from '../types';
 import { FlareIcon } from '../components/Icons';
 import { Logo } from '../components/Logo';
 import { useCurrency } from '../components/CurrencyContext';
+import { ProductCurrencyDropdown } from '../components/ProductCurrencyDropdown';
 
 export const Home = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -101,23 +102,7 @@ export const Home = () => {
               <div className="flex items-center gap-2 mt-2">
                 <span className="font-technical-sm text-label-xs text-white">{featured[0]?.price ? formatPrice(featured[0].price) : ''}</span>
                 {featured[0]?.price && (
-                  <select
-                    value={currencyCode}
-                    onChange={(e) => {
-                      setCurrency(e.target.value as any);
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                    }}
-                    className="text-[7.5px] font-technical-sm text-white hover:text-white border border-white/30 hover:border-brand-red/50 bg-black/50 px-1 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
-                    title="Select Currency Protocol"
-                  >
-                    <option value="NGN">NGN ₦</option>
-                    <option value="USD">USD $</option>
-                    <option value="EUR">EUR €</option>
-                    <option value="GBP">GBP £</option>
-                  </select>
+                  <ProductCurrencyDropdown darkBg={true} />
                 )}
               </div>
             </div>
@@ -149,23 +134,7 @@ export const Home = () => {
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-technical-sm text-[10px] text-white/70">{featured[1]?.price ? formatPrice(featured[1].price) : ''}</span>
                   {featured[1]?.price && (
-                    <select
-                      value={currencyCode}
-                      onChange={(e) => {
-                        setCurrency(e.target.value as any);
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="text-[7.5px] font-technical-sm text-white hover:text-white border border-white/20 hover:border-brand-red/40 bg-black/40 px-1 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
-                      title="Select Currency Protocol"
-                    >
-                      <option value="NGN">NGN ₦</option>
-                      <option value="USD">USD $</option>
-                      <option value="EUR">EUR €</option>
-                      <option value="GBP">GBP £</option>
-                    </select>
+                    <ProductCurrencyDropdown darkBg={true} />
                   )}
                 </div>
               </div>
@@ -193,23 +162,7 @@ export const Home = () => {
                 <div className="flex items-center gap-2 mt-1">
                   <span className="font-technical-sm text-[10px] text-white/70">{featured[2]?.price ? formatPrice(featured[2].price) : ''}</span>
                   {featured[2]?.price && (
-                    <select
-                      value={currencyCode}
-                      onChange={(e) => {
-                        setCurrency(e.target.value as any);
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="text-[7.5px] font-technical-sm text-white hover:text-white border border-white/20 hover:border-brand-red/40 bg-black/40 px-1 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
-                      title="Select Currency Protocol"
-                    >
-                      <option value="NGN">NGN ₦</option>
-                      <option value="USD">USD $</option>
-                      <option value="EUR">EUR €</option>
-                      <option value="GBP">GBP £</option>
-                    </select>
+                    <ProductCurrencyDropdown darkBg={true} />
                   )}
                 </div>
               </div>
@@ -257,23 +210,7 @@ export const Home = () => {
                   </div>
                   <div className="flex flex-col items-end gap-1 ml-4">
                     <span className="font-technical-sm text-[10px] opacity-70 whitespace-nowrap">{formatPrice(item.price)}</span>
-                    <select
-                      value={currencyCode}
-                      onChange={(e) => {
-                        setCurrency(e.target.value as any);
-                      }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      className="text-[7.5px] font-technical-sm text-on-surface-variant hover:text-white border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] px-1 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
-                      title="Select Currency Protocol"
-                    >
-                      <option value="NGN">NGN ₦</option>
-                      <option value="USD">USD $</option>
-                      <option value="EUR">EUR €</option>
-                      <option value="GBP">GBP £</option>
-                    </select>
+                    <ProductCurrencyDropdown darkBg={false} />
                   </div>
                 </div>
               </Link>
