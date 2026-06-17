@@ -13,7 +13,7 @@ import { WHATSAPP_LINK } from '../constants';
 
 export const Collections = () => {
   const { user } = useAuth();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, currencyCode, setCurrency } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -215,13 +215,28 @@ export const Collections = () => {
                     )}
                   </div>
 
-                  <Link to={`/product/${product.id}`} className="mt-8 flex justify-between items-start">
-                    <div>
-                      <h4 className="font-display text-lg uppercase tracking-tight group-hover:text-brand-red transition-colors">{product.name}</h4>
+                  <div className="mt-8 flex justify-between items-start">
+                    <Link to={`/product/${product.id}`} className="flex-grow group/link">
+                      <h4 className="font-display text-lg uppercase tracking-tight group-hover/link:text-brand-red transition-colors">{product.name}</h4>
                       <p className="font-technical-sm text-[10px] opacity-40 mt-1">{product.material || product.category}</p>
+                    </Link>
+                    <div className="flex flex-col items-end gap-1.5 ml-4">
+                      <span className="font-technical-sm text-label-xs text-primary whitespace-nowrap">{formatPrice(product.price)}</span>
+                      <select
+                        value={currencyCode}
+                        onChange={(e) => {
+                          setCurrency(e.target.value as any);
+                        }}
+                        className="text-[8px] font-technical-sm text-on-surface-variant hover:text-white border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] px-1.5 py-0.5 transition-all duration-300 focus:outline-none cursor-pointer select-none whitespace-nowrap outline-none [color-scheme:dark]"
+                        title="Select Currency Protocol"
+                      >
+                        <option value="NGN">NGN ₦</option>
+                        <option value="USD">USD $</option>
+                        <option value="EUR">EUR €</option>
+                        <option value="GBP">GBP £</option>
+                      </select>
                     </div>
-                    <span className="font-technical-sm text-label-xs text-primary">{formatPrice(product.price)}</span>
-                  </Link>
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>

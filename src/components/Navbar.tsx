@@ -7,21 +7,17 @@ import { cn } from '../lib/utils';
 import { Logo } from './Logo';
 import { useAuth } from './FirebaseProvider';
 import { useCart } from './CartProvider';
-import { useCurrency, currencies, CurrencyCode } from './CurrencyContext';
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isAdmin: isUserAdmin, setIsAuthModalOpen } = useAuth();
   const { totalItems, setIsCartOpen } = useCart();
-  const { currencyCode, setCurrency } = useCurrency();
 
-  const currencyRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -33,9 +29,6 @@ export const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
-        setIsCurrencyOpen(false);
-      }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setIsSearchOpen(false);
       }
@@ -98,55 +91,6 @@ export const Navbar = () => {
       </Link>
 
       <div className="flex items-center gap-1 sm:gap-3 md:gap-4">
-        {/* Custom Luxury Currency Selector */}
-        <div 
-          ref={currencyRef} 
-          className="relative transition-all duration-300"
-        >
-          <button
-            onClick={() => {
-              setIsCurrencyOpen(!isCurrencyOpen);
-              setIsSearchOpen(false);
-            }}
-            className="flex items-center gap-1 px-1.5 sm:px-3 py-1 sm:py-1.5 font-technical-sm text-[8px] sm:text-[9.5px] uppercase tracking-normal sm:tracking-widest text-primary hover:text-brand-red border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] transition-all duration-300 focus:outline-none cursor-pointer"
-            title="Switch Currency Protocol"
-          >
-            <span>{currencyCode}</span>
-            {!isMobile && (
-              <span className="opacity-40 font-mono"> ({currencies[currencyCode].symbol})</span>
-            )}
-          </button>
-          
-          <AnimatePresence>
-            {isCurrencyOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4 }}
-                transition={{ duration: 0.15 }}
-                className="absolute right-0 mt-2 bg-[#0c0c0c] border border-outline-variant/30 py-1.5 min-w-[100px] sm:min-w-[130px] shadow-2xl z-50 flex flex-col"
-              >
-                {(Object.keys(currencies) as CurrencyCode[]).map((code) => (
-                  <button
-                    key={code}
-                    onClick={() => {
-                      setCurrency(code);
-                      setIsCurrencyOpen(false);
-                    }}
-                    className={cn(
-                      "w-full text-left px-3 sm:px-4 py-1.5 sm:py-2 font-technical-sm text-[8px] sm:text-[9px] tracking-[0.1em] sm:tracking-[0.15em] uppercase transition-all duration-200 flex justify-between items-center hover:bg-brand-red/10 hover:text-white cursor-pointer",
-                      currencyCode === code ? "text-brand-red font-bold" : "text-[#999999]"
-                    )}
-                  >
-                    <span>{currencies[code].label.split(' ')[0]}</span>
-                    <span className="opacity-70 font-mono">{currencies[code].symbol}</span>
-                  </button>
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* Search Input Bar with Autocomplete Suggestions */}
         <div ref={searchRef} className="relative flex items-center">
           <AnimatePresence>
@@ -218,7 +162,6 @@ export const Navbar = () => {
         <button 
           onClick={() => {
             setIsSearchOpen(!isSearchOpen);
-            setIsCurrencyOpen(false);
           }}
           className="text-primary hover:scale-105 active:scale-95 transition-transform p-1 focus:outline-none"
           title="Search Inventory"
