@@ -10,7 +10,7 @@ interface LogoProps {
 export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
   const sizes = {
     sm: {
-      title: 'text-2xl',
+      title: 'text-xl md:text-2xl',
       subtitle: 'text-[6px]',
       gap: 'gap-0.5',
       icon: 'w-2 h-2',
