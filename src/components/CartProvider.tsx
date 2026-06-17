@@ -179,7 +179,8 @@ Please advise on carrier scheduling and completion of purchase.`;
         imageUrl: cart[0]?.selectedImage || cart[0]?.product.image || '',
         productName: cart[0]?.product.name 
           ? `${cart[0].product.name}${cart[0].selectedColor ? ` / ${cart[0].selectedColor.toUpperCase()}` : ''}${cart.length > 1 ? ` + ${cart.length - 1} Item(s)` : ''}`
-          : 'DLNZ Collector Item'
+          : 'DLNZ Collector Item',
+        shippingAddress: shippingAddress
       });
 
       if (orderId) {

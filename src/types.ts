@@ -30,6 +30,9 @@ export interface Order {
   createdAt?: any;
   imageUrl?: string;
   productName?: string;
+  shippingAddress?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface CartItem {

@@ -16,11 +16,32 @@ export const Collections = () => {
   const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('All');
   const [searchParams, setSearchParams] = useSearchParams();
+  const [filter, setFilter] = useState(() => searchParams.get('category') || 'All');
   const { addToCart } = useCart();
 
   const searchQuery = searchParams.get('search') || '';
+
+  useEffect(() => {
+    const cat = searchParams.get('category');
+    if (cat) {
+      setFilter(cat);
+    } else {
+      setFilter('All');
+    }
+  }, [searchParams]);
+
+  const handleCategoryChange = (newCat: string) => {
+    setFilter(newCat);
+    setSearchParams(prev => {
+      if (newCat === 'All') {
+        prev.delete('category');
+      } else {
+        prev.set('category', newCat);
+      }
+      return prev;
+    });
+  };
 
   useEffect(() => {
     const unsubscribe = productService.subscribeToProducts((data) => {
@@ -65,7 +86,10 @@ export const Collections = () => {
   }
 
   const handleClearSearch = () => {
-    setSearchParams({});
+    setSearchParams(prev => {
+      prev.delete('search');
+      return prev;
+    });
   };
 
   return (
@@ -100,14 +124,14 @@ export const Collections = () => {
       <div className="flex flex-col lg:flex-row gap-16">
         {/* Filters */}
         <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="sticky top-28 space-y-16">
+          <div className="lg:sticky lg:top-28 space-y-16">
             <div>
               <h3 className="font-technical-sm text-label-xs tracking-widest mb-6 opacity-60">Category</h3>
               <ul className="space-y-4 select-none">
                 {categories.map(cat => (
                   <li 
                     key={cat}
-                    onClick={() => setFilter(cat)}
+                    onClick={() => handleCategoryChange(cat)}
                     className={cn(
                       "cursor-pointer font-body text-sm uppercase tracking-wide transition-all flex items-center gap-3.5 group py-0.5",
                       filter === cat ? "text-primary font-bold" : "text-on-surface-variant hover:text-primary"

@@ -7,6 +7,7 @@ import { Order } from '../types';
 import { WHATSAPP_LINK } from '../constants';
 import { useAuth } from '../components/FirebaseProvider';
 import { useCurrency } from '../components/CurrencyContext';
+import { OrderTrackingMap } from '../components/OrderTrackingMap';
 
 export const Tracking = () => {
   const { user, setIsAuthModalOpen } = useAuth();
@@ -188,7 +189,7 @@ export const Tracking = () => {
           </p>
         </div>
       ) : order ? (
-        <div className="space-y-12">
+        <div className="space-y-16">
           {order.status === 'Cancelled' && (
             <div className="p-8 bg-red-950/20 border border-brand-red/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
                <div>
@@ -202,6 +203,10 @@ export const Tracking = () => {
                </div>
             </div>
           )}
+
+          {/* Real-time Satellite Tracker */}
+          <OrderTrackingMap order={order} />
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-24">
           {/* Timeline */}
           <div className="lg:col-span-7">

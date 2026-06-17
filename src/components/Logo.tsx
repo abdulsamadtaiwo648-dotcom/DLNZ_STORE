@@ -45,13 +45,14 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
       <div className={cn("flex flex-col items-center mt-1", current.gap)}>
         <span className={cn(
           "font-technical tracking-[0.4em] opacity-80 uppercase whitespace-nowrap text-on-surface",
+          size === 'sm' ? "hidden md:block" : "block",
           current.subtitle
         )}>
           Driven Lives. New Zone.
         </span>
         
         {/* Decorative Divider matching the logo image */}
-        <div className="flex items-center gap-2 mt-1">
+        <div className={cn("items-center gap-2 mt-1", size === 'sm' ? "hidden md:flex" : "flex")}>
           <div className={cn("h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent", current.divider)} />
           <FlareIcon className={cn("text-brand-red opacity-80", current.icon)} />
           <div className={cn("h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent", current.divider)} />

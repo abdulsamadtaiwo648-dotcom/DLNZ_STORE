@@ -21,11 +21,15 @@ export const Navbar = () => {
   const { currencyCode, setCurrency } = useCurrency();
 
   const currencyRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (currencyRef.current && !currencyRef.current.contains(event.target as Node)) {
         setIsCurrencyOpen(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -41,6 +45,11 @@ export const Navbar = () => {
     { label: 'About', href: '/about' },
     { label: 'Tracking', href: '/tracking' },
   ];
+
+  const staticCategories = ['Footwear', 'Clothes', 'Accessories & Jewelry', 'Bags'];
+  const matchedCategories = searchQuery.trim()
+    ? staticCategories.filter(cat => cat.toLowerCase().includes(searchQuery.toLowerCase().trim()))
+    : staticCategories;
 
   const isAdmin = location.pathname.startsWith('/admin');
 
@@ -73,46 +82,30 @@ export const Navbar = () => {
         </nav>
       </div>
 
-      <Link to="/" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center group">
+      <Link 
+        to="/" 
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2 flex flex-col items-center group transition-all duration-300",
+          isSearchOpen ? "hidden md:flex" : "flex"
+        )}
+      >
         <Logo size="sm" />
       </Link>
 
-      <div className="flex items-center gap-4 relative">
-        {/* Search Input Bar */}
-        <AnimatePresence>
-          {isSearchOpen && (
-            <motion.form 
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 180, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchQuery.trim()) {
-                  navigate(`/collections?search=${encodeURIComponent(searchQuery.trim())}`);
-                  setIsSearchOpen(false);
-                }
-              }}
-              className="absolute right-16 top-1/2 -translate-y-1/2 overflow-hidden flex items-center bg-brand-charcoal border border-outline-variant/30 px-3 py-1.5"
-            >
-              <input 
-                type="text" 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="SEARCH ENGINE..."
-                className="bg-transparent border-none text-[10px] uppercase font-technical-sm text-primary placeholder:opacity-25 focus:ring-0 outline-none w-full"
-                autoFocus
-              />
-              <button type="submit" className="text-primary hover:text-brand-red opacity-60">
-                <Search className="w-3.5 h-3.5" />
-              </button>
-            </motion.form>
-          )}
-        </AnimatePresence>
-
+      <div className="flex items-center gap-4">
         {/* Custom Luxury Currency Selector */}
-        <div ref={currencyRef} className="relative">
+        <div 
+          ref={currencyRef} 
+          className={cn(
+            "relative transition-all duration-300",
+            isSearchOpen ? "hidden md:block" : "block"
+          )}
+        >
           <button
-            onClick={() => setIsCurrencyOpen(!isCurrencyOpen)}
+            onClick={() => {
+              setIsCurrencyOpen(!isCurrencyOpen);
+              setIsSearchOpen(false);
+            }}
             className="flex items-center gap-1.5 px-3 py-1.5 font-technical-sm text-[9.5px] uppercase tracking-widest text-primary hover:text-brand-red border border-outline-variant/30 hover:border-brand-red/50 bg-[#0a0a0a] transition-all duration-300 focus:outline-none cursor-pointer"
             title="Switch Currency Protocol"
           >
@@ -150,8 +143,77 @@ export const Navbar = () => {
           </AnimatePresence>
         </div>
 
+        {/* Search Input Bar with Autocomplete Suggestions */}
+        <div ref={searchRef} className="relative flex items-center">
+          <AnimatePresence>
+            {isSearchOpen && (
+              <div className="relative flex items-center">
+                <motion.form 
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 180, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (searchQuery.trim()) {
+                      navigate(`/collections?search=${encodeURIComponent(searchQuery.trim())}`);
+                      setIsSearchOpen(false);
+                    }
+                  }}
+                  className="overflow-hidden flex items-center bg-brand-charcoal border border-outline-variant/30 px-3 py-1.5 h-8 animate-none"
+                >
+                  <input 
+                    type="text" 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="SEARCH ENGINE..."
+                    className="bg-transparent border-none text-[10px] uppercase font-technical-sm text-primary placeholder:opacity-25 focus:ring-0 outline-none w-full"
+                    autoFocus
+                  />
+                  <button type="submit" className="text-primary hover:text-brand-red opacity-60">
+                    <Search className="w-3.5 h-3.5" />
+                  </button>
+                </motion.form>
+
+                {/* Suggestions Dropdown */}
+                {matchedCategories.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 top-full mt-2 bg-[#0c0c0c] border border-outline-variant/30 py-2 w-[180px] shadow-2xl z-50 flex flex-col"
+                  >
+                    <div className="px-3 pb-1 border-b border-outline-variant/10 mb-1">
+                      <span className="font-technical-sm text-[7.5px] uppercase tracking-widest opacity-40 font-bold block">
+                        SUGGESTED CATEGORIES
+                      </span>
+                    </div>
+                    {matchedCategories.map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => {
+                          navigate(`/collections?category=${encodeURIComponent(cat)}`);
+                          setSearchQuery('');
+                          setIsSearchOpen(false);
+                        }}
+                        className="w-full text-left px-3 py-1.5 font-technical-sm text-[8.5px] tracking-widest uppercase transition-all duration-200 flex items-center justify-between hover:bg-brand-red/10 hover:text-white cursor-pointer group"
+                      >
+                        <span className="text-on-surface-variant group-hover:text-primary transition-colors">{cat}</span>
+                        <span className="text-[7px] font-mono text-brand-red opacity-0 group-hover:opacity-100 transition-opacity">SELECT ↗</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
+
         <button 
-          onClick={() => setIsSearchOpen(!isSearchOpen)}
+          onClick={() => {
+            setIsSearchOpen(!isSearchOpen);
+            setIsCurrencyOpen(false);
+          }}
           className="text-primary hover:scale-105 active:scale-95 transition-transform p-1.5 focus:outline-none"
           title="Search Inventory"
         >
