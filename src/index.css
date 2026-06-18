@@ -50,26 +50,26 @@
   --color-brand-silver: #C0C0C0;
 }
 
-:root.light {
-  --color-surface: #faf9f6;
-  --color-surface-dim: #f3f1eb;
-  --color-surface-bright: #ffffff;
-  --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f5f4ef;
-  --color-surface-container: #ebeae4;
-  --color-surface-container-high: #dfded7;
-  --color-surface-container-highest: #d2d0c8;
+html.light {
+  --color-surface: #FCFAF7;
+  --color-surface-dim: #F5F3F0;
+  --color-surface-bright: #FFFFFF;
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F6F4F1;
+  --color-surface-container: #EFECE8;
+  --color-surface-container-high: #E6E2DE;
+  --color-surface-container-highest: #DBD6D0;
   --color-on-surface: #111111;
-  --color-on-surface-variant: #444444;
+  --color-on-surface-variant: #464646;
   --color-inverse-surface: #111111;
-  --color-inverse-on-surface: #ffffff;
-  --color-outline: #6e6d68;
-  --color-outline-variant: #dad8cc;
-  --color-primary: #1c1c1c;
-  --color-on-primary: #ffffff;
-  --color-brand-stone: #111111;
-  --color-brand-charcoal: #f0efe9;
-  --color-brand-silver: #444444;
+  --color-inverse-on-surface: #FCFAF7;
+  --color-outline: #8c8585;
+  --color-outline-variant: #D2CDC8;
+  --color-primary: #111111;
+  --color-on-primary: #FCFAF7;
+  --color-brand-stone: #E1DFDB;
+  --color-brand-charcoal: #FAF8F5;
+  --color-brand-silver: #555555;
 }
 
 @layer base {

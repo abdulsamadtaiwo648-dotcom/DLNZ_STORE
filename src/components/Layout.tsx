@@ -5,8 +5,7 @@ import { Footer } from './Footer';
 import { AdminSidebar } from './AdminSidebar';
 import { useAuth } from './FirebaseProvider';
 import { AuthModal } from './AuthModal';
-import { MessageSquare } from 'lucide-react';
-import { WHATSAPP_LINK } from '../constants';
+import { SupportChatbot } from './SupportChatbot';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const location = useLocation();
@@ -36,18 +35,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <Footer />
       <AuthModal />
 
-      {/* Floating WhatsApp Support */}
-      <a 
-        href={WHATSAPP_LINK('Hello DLNZ, I have a question regarding my order/collection.')}
-        target="_blank"
-        rel="noreferrer"
-        className="fixed bottom-8 right-8 z-50 bg-brand-red text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all group border border-white/20"
-      >
-        <MessageSquare className="w-6 h-6" />
-        <span className="absolute right-full mr-4 bg-black/80 backdrop-blur-md px-4 py-2 text-[10px] font-technical-sm tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity border border-white/10 pointer-events-none">
-          WHATSAPP SUPPORT
-        </span>
-      </a>
+      {/* Modern Interactive Customer Support Chatbot Widget */}
+      <SupportChatbot />
     </div>
   );
 };

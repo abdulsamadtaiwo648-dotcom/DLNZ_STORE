@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Mail, Lock, User as UserIcon, Loader2, Compass, AlertCircle } from 'lucide-react';
 import { useAuth } from './FirebaseProvider';
+import { useTheme } from './ThemeContext';
+import { cn } from '../lib/utils';
 
 export const AuthModal: React.FC = () => {
   const { 
@@ -13,6 +15,8 @@ export const AuthModal: React.FC = () => {
     authError, 
     setAuthError 
   } = useAuth();
+
+  const { theme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
@@ -102,42 +106,60 @@ export const AuthModal: React.FC = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           transition={{ type: 'spring', duration: 0.4 }}
-          className="relative w-full max-w-md bg-surface-container border border-outline-variant/50 p-8 shadow-2xl z-50 text-primary uppercase"
+          className={cn(
+            "relative w-full max-w-md p-8 sm:p-10 shadow-2xl z-50 uppercase border transition-colors duration-300",
+            theme === 'light' 
+              ? "bg-[#FCFAF7] border-black/10 text-black animate-none" 
+              : "bg-black border-white/10 text-white"
+          )}
           id="auth-modal"
         >
           {/* Close button */}
           <button 
             onClick={handleClose}
-            className="absolute top-4 right-4 p-1.5 text-primary opacity-60 hover:opacity-100 hover:text-brand-red transition-all cursor-pointer"
-            title="Close Authentication"
+            className={cn(
+              "absolute top-6 right-6 p-1 transition-all duration-300 cursor-pointer",
+              theme === 'light' ? "text-black/50 hover:text-brand-red hover:rotate-90" : "text-white/50 hover:text-brand-red hover:rotate-90"
+            )}
+            title="Close"
           >
             <X className="w-5 h-5" />
           </button>
 
           {/* Luxury DLNZ Branding Header */}
-          <div className="text-center mb-8">
-            <span className="font-technical-sm text-[9px] tracking-[0.3em] opacity-40 block mb-1">
-              Verification Engine
-            </span>
-            <h2 className="font-display text-2xl font-bold tracking-tighter text-white">
-              DLNZ FASHION COLLECTIVE
+          <div className="text-center mb-10">
+            <h2 className={cn(
+              "font-display text-4xl font-black tracking-tighter italic leading-none transition-colors duration-300",
+              theme === 'light' ? "text-black" : "text-white"
+            )}>
+              DLNZ
             </h2>
-            <div className="h-[2px] w-12 bg-brand-red mx-auto mt-3" />
+            <span className={cn(
+              "font-technical text-[9px] tracking-[0.4em] block mt-2 transition-colors duration-300",
+              theme === 'light' ? "text-black/40" : "text-white/40"
+            )}>
+              STREET FASHION
+            </span>
+            <div className="h-[1px] w-12 bg-brand-red mx-auto mt-4" />
           </div>
 
           {/* Interactive Navigation Tabs */}
-          <div className="flex border-b border-outline-variant/30 mb-6">
+          <div className={cn(
+            "flex border-b mb-8 transition-colors duration-300",
+            theme === 'light' ? "border-black/10" : "border-white/10"
+          )}>
             <button
               onClick={() => {
                 setActiveTab('signin');
                 setValidationError(null);
                 setAuthError(null);
               }}
-              className={`flex-1 pb-3 text-[10px] font-technical-sm font-bold tracking-widest transition-all ${
+              className={cn(
+                "flex-1 pb-3 text-[10px] font-technical tracking-[0.15em] font-bold transition-all outline-none",
                 activeTab === 'signin' 
-                  ? 'text-white border-b-2 border-brand-red opacity-100' 
-                  : 'text-primary opacity-40 hover:opacity-75'
-              }`}
+                  ? (theme === 'light' ? 'text-black border-b border-brand-red opacity-100' : 'text-white border-b border-brand-red opacity-100')
+                  : (theme === 'light' ? 'text-black/40 hover:opacity-80' : 'text-white/40 hover:opacity-80')
+              )}
             >
               Sign In
             </button>
@@ -147,25 +169,32 @@ export const AuthModal: React.FC = () => {
                 setValidationError(null);
                 setAuthError(null);
               }}
-              className={`flex-1 pb-3 text-[10px] font-technical-sm font-bold tracking-widest transition-all ${
+              className={cn(
+                "flex-1 pb-3 text-[10px] font-technical tracking-[0.15em] font-bold transition-all outline-none",
                 activeTab === 'signup' 
-                  ? 'text-white border-b-2 border-brand-red opacity-100' 
-                  : 'text-primary opacity-40 hover:opacity-75'
-              }`}
+                  ? (theme === 'light' ? 'text-black border-b border-brand-red opacity-100' : 'text-white border-b border-brand-red opacity-100')
+                  : (theme === 'light' ? 'text-black/40 hover:opacity-80' : 'text-white/40 hover:opacity-80')
+              )}
             >
-              New Account
+              Register
             </button>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleFormSubmit} className="space-y-4">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
             {activeTab === 'signup' && (
               <div>
-                <label className="font-technical-sm text-[8px] tracking-widest opacity-40 mb-1.5 block">
-                  Full Account Name
+                <label className={cn(
+                  "font-technical text-[8px] tracking-[0.2em] mb-2 block transition-colors duration-300",
+                  theme === 'light' ? "text-black/50" : "text-white/40"
+                )}>
+                  Full Name
                 </label>
                 <div className="relative">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-primary/40">
+                  <span className={cn(
+                    "absolute inset-y-0 left-0 pl-3 flex items-center transition-colors duration-300",
+                    theme === 'light' ? "text-black/30" : "text-white/30"
+                  )}>
                     <UserIcon className="w-4 h-4" />
                   </span>
                   <input
@@ -174,18 +203,29 @@ export const AuthModal: React.FC = () => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="E.G. ABDULSAMAD TAIWO"
-                    className="w-full bg-brand-charcoal text-primary border border-outline-variant/30 pl-10 pr-4 py-3 text-xs uppercase tracking-wider font-technical-sm placeholder:opacity-25 outline-none focus:border-brand-red transition-colors"
+                    className={cn(
+                      "w-full text-xs uppercase tracking-wider font-technical outline-none transition-all duration-300 pl-10 pr-4 py-3.5",
+                      theme === 'light' 
+                        ? "bg-black/[0.03] text-black border border-black/10 placeholder:text-black/20 focus:border-brand-red" 
+                        : "bg-white/[0.03] text-white border border-white/10 placeholder:text-white/10 focus:border-brand-red"
+                    )}
                   />
                 </div>
               </div>
             )}
 
             <div>
-              <label className="font-technical-sm text-[8px] tracking-widest opacity-40 mb-1.5 block">
-                Email Address Coordinates
+              <label className={cn(
+                "font-technical text-[8px] tracking-[0.2em] mb-2 block transition-colors duration-300",
+                theme === 'light' ? "text-black/50" : "text-white/40"
+              )}>
+                Email Address
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-primary/40">
+                <span className={cn(
+                  "absolute inset-y-0 left-0 pl-3 flex items-center transition-colors duration-300",
+                  theme === 'light' ? "text-black/30" : "text-white/30"
+                )}>
                   <Mail className="w-4 h-4" />
                 </span>
                 <input
@@ -194,17 +234,28 @@ export const AuthModal: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="USER@DOMAIN.COM"
-                  className="w-full bg-brand-charcoal text-primary border border-outline-variant/30 pl-10 pr-4 py-3 text-xs tracking-wider font-technical-sm placeholder:opacity-25 outline-none focus:border-brand-red transition-colors"
+                  className={cn(
+                    "w-full text-xs tracking-wider font-technical outline-none transition-all duration-300 pl-10 pr-4 py-3.5",
+                    theme === 'light' 
+                      ? "bg-black/[0.03] text-black border border-black/10 placeholder:text-black/20 focus:border-brand-red" 
+                      : "bg-white/[0.03] text-white border border-white/10 placeholder:text-white/10 focus:border-brand-red"
+                  )}
                 />
               </div>
             </div>
 
             <div>
-              <label className="font-technical-sm text-[8px] tracking-widest opacity-40 mb-1.5 block">
-                Secure Password
+              <label className={cn(
+                "font-technical text-[8px] tracking-[0.2em] mb-2 block transition-colors duration-300",
+                theme === 'light' ? "text-black/50" : "text-white/40"
+              )}>
+                Password
               </label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-primary/40">
+                <span className={cn(
+                  "absolute inset-y-0 left-0 pl-3 flex items-center transition-colors duration-300",
+                  theme === 'light' ? "text-black/30" : "text-white/30"
+                )}>
                   <Lock className="w-4 h-4" />
                 </span>
                 <input
@@ -213,14 +264,19 @@ export const AuthModal: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-brand-charcoal text-primary border border-outline-variant/30 pl-10 pr-4 py-3 text-xs tracking-wider font-technical-sm placeholder:opacity-25 outline-none focus:border-brand-red transition-colors"
+                  className={cn(
+                    "w-full text-xs tracking-wider font-technical outline-none transition-all duration-300 pl-10 pr-4 py-3.5",
+                    theme === 'light' 
+                      ? "bg-black/[0.03] text-black border border-black/10 placeholder:text-black/20 focus:border-brand-red" 
+                      : "bg-white/[0.03] text-white border border-white/10 placeholder:text-white/10 focus:border-brand-red"
+                  )}
                 />
               </div>
             </div>
 
             {/* Error notifications */}
             {(validationError || authError) && (
-              <div className="bg-brand-red/10 border border-brand-red/30 p-3 text-[9px] font-technical-sm tracking-wide text-red-400 flex items-start gap-2 leading-relaxed">
+              <div className="bg-brand-red/10 border border-brand-red/20 p-3.5 text-[9px] font-technical tracking-wide text-brand-red flex items-start gap-2.5 leading-relaxed">
                 <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
                 <span>{validationError || authError}</span>
               </div>
@@ -230,27 +286,41 @@ export const AuthModal: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-white hover:bg-white/90 text-black font-technical-sm text-[10px] uppercase py-4.5 tracking-widest font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer mt-2"
+              className={cn(
+                "w-full font-technical text-[10px] uppercase py-4 tracking-[0.2em] font-bold flex items-center justify-center gap-2 active:scale-[0.99] transition-all duration-300 disabled:opacity-50 cursor-pointer mt-4",
+                theme === 'light' 
+                  ? "bg-black hover:bg-neutral-800 text-white" 
+                  : "bg-white hover:bg-neutral-200 text-black"
+              )}
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Synchronizing Credentials...
+                  AUTHENTICATING...
                 </>
               ) : activeTab === 'signin' ? (
                 'Sign In'
               ) : (
-                'Construct Account'
+                'Create Account'
               )}
             </button>
           </form>
 
           {/* Divider */}
-          <div className="relative my-6 flex items-center justify-center text-[8px] font-technical-sm opacity-30 tracking-[0.2em]">
+          <div className={cn(
+            "relative my-8 flex items-center justify-center text-[8px] font-technical tracking-[0.2em]",
+            theme === 'light' ? "text-black/30" : "text-white/30"
+          )}>
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-outline-variant/30"></div>
+              <div className={cn(
+                "w-full border-t",
+                theme === 'light' ? "border-black/10" : "border-white/10"
+              )}></div>
             </div>
-            <span className="relative bg-surface-container px-3">or authenticate via</span>
+            <span className={cn(
+              "relative px-4 font-bold transition-all",
+              theme === 'light' ? "bg-[#FCFAF7]" : "bg-black"
+            )}>OR</span>
           </div>
 
           {/* Google Sign In option */}
@@ -258,7 +328,12 @@ export const AuthModal: React.FC = () => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full border border-outline-variant/40 hover:bg-white hover:text-black font-technical-sm text-[10px] uppercase py-4 tracking-widest transition-all flex items-center justify-center gap-3 cursor-pointer"
+            className={cn(
+              "w-full font-technical text-[10px] uppercase py-3.5 tracking-[0.15em] transition-all duration-300 flex items-center justify-center gap-3 cursor-pointer border",
+              theme === 'light' 
+                ? "border-black/10 hover:border-black hover:bg-black hover:text-white text-black" 
+                : "border-white/10 hover:border-white hover:bg-white hover:text-black text-white"
+            )}
           >
             <svg className="w-4 h-4 pr-0.5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -266,16 +341,25 @@ export const AuthModal: React.FC = () => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
             </svg>
-            Google Identity
+            Continue with Google
           </button>
 
           {/* Helpful Cross-origin Cookie Box constraint */}
-          <div className="mt-6 p-4 bg-brand-charcoal border border-outline-variant/30 rounded-xs">
+          <div className={cn(
+            "mt-8 p-4 border rounded-xs transition-colors duration-300",
+            theme === 'light' ? "bg-black/[0.02] border-black/5" : "bg-white/[0.02] border-white/5"
+          )}>
             <div className="flex gap-2.5 items-start">
               <Compass className="w-4 h-4 text-brand-red flex-shrink-0 mt-0.5" />
-              <div className="text-[8px] font-technical-sm tracking-wide leading-relaxed text-primary-light">
-                <span className="font-bold text-white block mb-0.5">Iframe Cookie Restriction Notice</span>
-                If third-party security settings bloque registration or sign-in popups inside the preview iframe, please use the <span className="text-white font-bold">Open in New Tab</span> trigger at the top right of the device controls to authorize safely.
+              <div className={cn(
+                "text-[8px] font-technical tracking-wider leading-relaxed",
+                theme === 'light' ? "text-black/50" : "text-white/50"
+              )}>
+                <span className={cn(
+                  "font-bold block mb-0.5",
+                  theme === 'light' ? "text-black" : "text-white"
+                )}>Iframe Restriction Alert</span>
+                If third-party cookie controls block registration/sign-in here, please use the <span className={cn("font-bold", theme === 'light' ? "text-black font-semibold" : "text-white font-semibold")}>Open in New Tab</span> action at the top right of your screen.
               </div>
             </div>
           </div>

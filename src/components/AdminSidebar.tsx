@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutGrid, History, Info, Sparkles, LogOut, Menu, X } from 'lucide-react';
+import { LayoutGrid, History, Info, Sparkles, LogOut, Menu, X, MessageSquare } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Logo } from './Logo';
 
@@ -15,6 +15,7 @@ export const AdminSidebar = () => {
     { label: 'Dashboard', href: '/admin', icon: Sparkles },
     { label: 'Inventory', href: '/admin/inventory', icon: LayoutGrid },
     { label: 'Orders', href: '/admin/orders', icon: History },
+    { label: 'Live Chats', href: '/admin/chats', icon: MessageSquare },
     { label: 'Analytics', href: '/admin/analytics', icon: Info },
   ];
 

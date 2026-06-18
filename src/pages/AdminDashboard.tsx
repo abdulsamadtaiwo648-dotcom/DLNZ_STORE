@@ -4,13 +4,15 @@ import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 
 import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { Product, Order } from '../types';
-import { Download, Edit2, Trash2, Plus, Search, Lock, Database, ShieldAlert, KeyRound, ArrowRight, X, FileSpreadsheet, Calendar } from 'lucide-react';
+import { Download, Edit2, Trash2, Plus, Search, Lock, Database, ShieldAlert, KeyRound, ArrowRight, X, FileSpreadsheet, Calendar, MessageSquare, Send, Clock } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../components/FirebaseProvider';
 import { useCurrency } from '../components/CurrencyContext';
 import { ProductModal } from '../components/admin/ProductModal';
 import { ReportModal } from '../components/admin/ReportModal';
 import { motion, AnimatePresence } from 'motion/react';
+import { collection, onSnapshot, query, orderBy, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 const DashboardHome = ({ products, orders }: { products: Product[], orders: Order[] }) => {
   const { formatPrice, convertPrice, selectedCurrency } = useCurrency();
@@ -655,6 +657,176 @@ const OrdersManagement = ({ orders, onUpdateStatus }: { orders: Order[], onUpdat
   );
 };
 
+const ChatsManagement = () => {
+  const [chats, setChats] = useState<any[]>([]);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [loading, setLoading] = useState(true);
+  const chatEndRef = React.useRef<HTMLDivElement>(null);
+
+  // Subscribe to live chats in Firestore
+  useEffect(() => {
+    const q = query(collection(db, 'support_chats'), orderBy('updatedAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const chatsList = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setChats(chatsList);
+      setLoading(false);
+    }, (err) => {
+      console.error('Failed to sync live chats list:', err);
+      setLoading(false);
+    });
+    return () => unsub();
+  }, []);
+
+  const activeChat = chats.find(c => c.id === selectedChatId);
+
+  useEffect(() => {
+    if (activeChat?.messages) {
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [activeChat?.messages]);
+
+  const handleSendReply = async () => {
+    if (!replyText.trim() || !selectedChatId || !activeChat) return;
+
+    const newReply = {
+      id: Math.random().toString(36).substring(2, 11),
+      role: 'model', // Send response representing the support JOE chatbot/staff
+      text: replyText.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const updatedMessages = [...(activeChat.messages || []), newReply];
+    setReplyText('');
+
+    try {
+      const docRef = doc(db, 'support_chats', selectedChatId);
+      await setDoc(docRef, {
+        messages: updatedMessages,
+        lastMessage: newReply.text,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+    } catch (err) {
+      console.error('Failed to submit staff response to Firestore:', err);
+    }
+  };
+
+  return (
+    <div className="border border-outline-variant/30 min-h-[600px] flex flex-col lg:flex-row bg-surface">
+      {/* Sidebar List */}
+      <div className="w-full lg:w-80 border-r border-outline-variant/20 flex flex-col shrink-0">
+        <div className="p-4 bg-surface-container flex items-center justify-between border-b border-outline-variant/20">
+          <h3 className="font-technical-sm text-[10px] uppercase font-bold tracking-widest text-[#8e8e8e]">Support Logs</h3>
+          <span className="px-2 py-0.5 bg-brand-red text-white text-[8px] font-mono tracking-widest leading-none rounded-none">{chats.length} Active</span>
+        </div>
+        <div className="flex-1 overflow-y-auto divide-y divide-outline-variant/15 max-h-[520px]">
+          {loading ? (
+            <div className="p-8 text-center text-[10px] font-mono text-[#8e8e8e] uppercase tracking-wider animate-pulse font-bold">Sourcing Live Records...</div>
+          ) : chats.length === 0 ? (
+            <div className="p-8 text-center text-[10px] font-mono text-[#8e8e8e] uppercase tracking-wider font-bold">No Active Sessions</div>
+          ) : (
+            chats.map(chat => (
+              <button
+                key={chat.id}
+                onClick={() => setSelectedChatId(chat.id)}
+                className={cn(
+                  "w-full text-left p-5 transition-all duration-200 outline-none flex flex-col gap-1 hover:bg-surface-variant/15 cursor-pointer block",
+                  selectedChatId === chat.id ? "bg-surface-container border-l-2 border-brand-red" : "border-l-2 border-transparent"
+                )}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-technical text-[10px] text-white font-bold tracking-wider">{chat.id}</span>
+                  <div className="flex items-center gap-1 opacity-40 text-[8px] font-mono">
+                    <Clock className="w-2.5 h-2.5" />
+                    <span>
+                      {chat.updatedAt?.seconds 
+                        ? new Date(chat.updatedAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                        : 'Active Now'}
+                    </span>
+                  </div>
+                </div>
+                <p className="font-sans text-[11px] text-[#aeaeae] truncate max-w-[240px] mt-1">{chat.lastMessage}</p>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Main Details Panel */}
+      <div className="flex-1 flex flex-col min-h-[500px]">
+        {activeChat ? (
+          <>
+            <div className="p-4 bg-[#0a0a0a] border-b border-outline-variant/20 flex justify-between items-center px-6">
+              <div>
+                <h4 className="font-technical-sm text-xs text-white uppercase font-bold tracking-wider">Session {activeChat.id}</h4>
+                <p className="text-[9px] text-[#8e8e8e] uppercase font-mono tracking-widest mt-0.5">Assigned Agent: JOE (Customer Assistant)</p>
+              </div>
+            </div>
+
+            {/* Conversation Log */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 max-h-[400px] min-h-[300px] bg-[#020202]">
+              {activeChat.messages && activeChat.messages.map((msg: any) => (
+                <div key={msg.id} className={cn("flex flex-col", msg.role === 'user' ? "items-start" : "items-end")}>
+                  <div className={cn(
+                    "max-w-[80%] px-4 py-3 text-[11px] leading-relaxed border rounded-sm font-sans",
+                    msg.role === 'user'
+                      ? "bg-[#121212] border-outline-variant/20 text-gray-300"
+                      : "bg-brand-red border-brand-red text-white font-medium"
+                  )}>
+                    {msg.text}
+                  </div>
+                  <span className="text-[9px] font-sans text-gray-500 mt-1 uppercase tracking-wider font-semibold">
+                    {msg.role === 'user' ? 'GUEST CUSTOMER' : 'JOE (STAFF)'} • {msg.timestamp}
+                  </span>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+
+            {/* Chat Input */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendReply();
+              }}
+              className="p-4 bg-[#0c0c0c] border-t border-outline-variant/20 flex gap-2"
+            >
+              <input
+                type="text"
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Type real-time reply as Agent JOE..."
+                className="flex-1 bg-black border border-outline-variant/30 px-3.5 py-3 text-[11px] font-sans placeholder:opacity-30 focus:outline-none focus:border-brand-red text-white"
+              />
+              <button
+                type="submit"
+                disabled={!replyText.trim()}
+                className="bg-brand-red text-white px-6 flex items-center justify-center hover:bg-brand-red/90 transition-all cursor-pointer disabled:opacity-50 font-technical-sm text-[10px] tracking-widest uppercase font-bold"
+              >
+                <Send className="w-3.5 h-3.5 mr-2" />
+                Reply
+              </button>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center bg-[#020202]">
+            <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant mb-4 border border-outline-variant/20">
+              <MessageSquare className="w-8 h-8 opacity-45 text-brand-red animate-pulse" />
+            </div>
+            <h4 className="font-display text-sm uppercase tracking-wider mb-2 font-bold text-white">Live Customer Chats</h4>
+            <p className="font-sans text-xs text-[#8e8e8e] leading-relaxed max-w-sm">
+              Select an active customer conversation session from the left side panel list to view in real-time or manually respond as Agent JOE.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const AdminDashboard = () => {
   const { 
     isAdmin: isAuthorized, 
@@ -680,6 +852,12 @@ export const AdminDashboard = () => {
   const [isRegistering, setIsRegistering] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // Safe custom sandbox-friendly confirmation overlays
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isConfirmingSeed, setIsConfirmingSeed] = useState(false);
+  const [seedingSuccess, setSeedingSuccess] = useState(false);
+  const [seedingError, setSeedingError] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -713,29 +891,12 @@ export const AdminDashboard = () => {
   }, [isAuthorized, authLoading]);
 
   const handleDeleteProduct = async (product: Product) => {
-    if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
-      await productService.deleteProduct(product.id);
-    }
+    setProductToDelete(product);
   };
 
   const [seedingLoading, setSeedingLoading] = useState(false);
   const handleSeedDatabase = async () => {
-    if (window.confirm('Are you sure you want to seed the default luxury items as live Firebase entries? This will register products and initial master orders in real-time.')) {
-      setSeedingLoading(true);
-      try {
-        const response = await fetch('/api/admin/seed', { method: 'POST' });
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-        }
-        alert('Database populated with live DLNZ inventory and order logs successfully via Express backend!');
-      } catch (err: any) {
-        console.error('Seeding error:', err);
-        alert(`Seeding exception: ${err?.message || err}`);
-      } finally {
-        setSeedingLoading(false);
-      }
-    }
+    setIsConfirmingSeed(true);
   };
 
   const handleUpdateOrderStatus = async (id: string, newStatus: Order['status']) => {
@@ -977,6 +1138,7 @@ export const AdminDashboard = () => {
             />
           } />
           <Route path="orders" element={<OrdersManagement orders={orders} onUpdateStatus={handleUpdateOrderStatus} />} />
+          <Route path="chats" element={<ChatsManagement />} />
           <Route path="analytics" element={<DashboardHome products={products} orders={orders} />} />
           <Route path="*" element={<DashboardHome products={products} orders={orders} />} />
         </Routes>
@@ -995,6 +1157,152 @@ export const AdminDashboard = () => {
           }
         }}
       />
+
+      {/* Safe confirmation modal for deleting products */}
+      <AnimatePresence>
+        {productToDelete && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-black border border-outline-variant/30 max-w-sm w-full p-8"
+            >
+              <h3 className="font-display text-sm uppercase tracking-wider mb-2 font-bold text-white">Erase SKU Record?</h3>
+              <p className="font-sans text-xs text-[#aeaeae] leading-relaxed mb-6">
+                Are you absolutely sure you want to delete <span className="text-white font-semibold font-mono">{productToDelete.name}</span> from the catalog? This action cannot be undone.
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setProductToDelete(null)}
+                  className="flex-1 py-3 border border-outline-variant/40 text-[10px] uppercase font-bold tracking-widest text-[#aaa] hover:text-white rounded-none cursor-pointer hover:border-white transition-all bg-transparent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    const pId = productToDelete.id;
+                    setProductToDelete(null);
+                    try {
+                      await productService.deleteProduct(pId);
+                    } catch (err) {
+                      console.error('Delete product failed:', err);
+                    }
+                  }}
+                  className="flex-1 py-3 bg-brand-red text-white text-[10px] uppercase font-bold tracking-widest hover:bg-red-700 rounded-none cursor-pointer transition-all border-none font-bold"
+                >
+                  Delete SKU
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Safe confirmation modal for database seeding */}
+      <AnimatePresence>
+        {isConfirmingSeed && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-black border border-outline-variant/30 max-w-sm w-full p-8"
+            >
+              <h3 className="font-display text-sm uppercase tracking-wider mb-2 font-bold text-white">Populate Live Registry?</h3>
+              <p className="font-sans text-xs text-[#aeaeae] leading-relaxed mb-6">
+                Are you sure you want to seed the default premium streetwear collection items and initial order entries into your live database?
+              </p>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setIsConfirmingSeed(false)}
+                  className="flex-1 py-3 border border-outline-variant/40 text-[10px] uppercase font-bold tracking-widest text-[#aaa] hover:text-white rounded-none cursor-pointer hover:border-white transition-all bg-transparent"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    setIsConfirmingSeed(false);
+                    setSeedingLoading(true);
+                    try {
+                      const response = await fetch('/api/admin/seed', { method: 'POST' });
+                      if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+                      }
+                      setSeedingSuccess(true);
+                    } catch (err: any) {
+                      console.error('Seeding error:', err);
+                      setSeedingError(err?.message || String(err));
+                    } finally {
+                      setSeedingLoading(false);
+                    }
+                  }}
+                  className="flex-1 py-3 bg-brand-red text-white text-[10px] uppercase font-bold tracking-widest hover:bg-red-700 rounded-none cursor-pointer transition-all border-none font-bold"
+                >
+                  Confirm Seed
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Seed database success dialog */}
+      <AnimatePresence>
+        {seedingSuccess && (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-black border border-white/20 max-w-xs w-full p-8 text-center"
+            >
+              <div className="w-12 h-12 bg-green-500/10 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Database className="w-5 h-5 animate-bounce" />
+              </div>
+              <h3 className="font-display text-xs uppercase tracking-widest mb-2 font-bold text-white">Database Seeded</h3>
+              <p className="font-sans text-[11px] text-[#aeaeae] leading-relaxed mb-6">
+                Default collections populated with live luxury products and initial fulfillment records successfully!
+              </p>
+              <button
+                onClick={() => setSeedingSuccess(false)}
+                className="w-full py-2.5 bg-white text-black font-technical-sm text-[10px] uppercase tracking-widest font-bold hover:bg-gray-200 transition-colors"
+              >
+                Continue
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Seed database error dialog */}
+      <AnimatePresence>
+        {seedingError && (
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[999] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-black border border-brand-red/25 max-w-xs w-full p-8 text-center"
+            >
+              <div className="w-12 h-12 bg-brand-red/10 text-brand-red rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldAlert className="w-5 h-5 animate-pulse" />
+              </div>
+              <h3 className="font-display text-xs uppercase tracking-widest mb-2 font-bold text-[#f55]">Seeding Aborted</h3>
+              <p className="font-sans text-[10px] text-[#aeaeae] leading-relaxed mb-6 truncate">
+                {seedingError}
+              </p>
+              <button
+                onClick={() => setSeedingError(null)}
+                className="w-full py-2.5 border border-outline-variant/50 text-[#ccc] hover:text-white font-technical-sm text-[10px] uppercase tracking-widest font-bold hover:border-white transition-colors"
+              >
+                Dismiss
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -46,6 +46,22 @@
         "email": { "type": "string" }
       },
       "required": ["email"]
+    },
+    "SupportChat": {
+      "title": "SupportChat",
+      "description": "A live support chat session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "messages": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "required": ["id", "messages", "updatedAt"]
     }
   },
   "firestore": {
@@ -60,6 +76,10 @@
     "/admins/{userId}": {
       "schema": "Admin",
       "description": "List of authorized administrators."
+    },
+    "/support_chats/{chatSessionId}": {
+      "schema": "SupportChat",
+      "description": "Active and historic support chat session transcripts."
     }
   }
 }

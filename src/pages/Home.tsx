@@ -51,7 +51,7 @@ export const Home = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Logo size="lg" className="mb-12" />
+            <Logo size="lg" darkBg={true} className="mb-12" />
           </motion.div>
           <motion.p 
             initial={{ opacity: 0 }}

@@ -61,5 +61,11 @@ service cloud.firestore {
       allow delete: if isAdmin() || 
                     (resource != null && isServerBypass(resource.data));
     }
+
+    // Rules for Support Chats segment
+    match /support_chats/{chatSessionId} {
+      allow read: if true;
+      allow write: if request.resource.data.id == chatSessionId || isAdmin();
+    }
   }
 }

@@ -5,9 +5,10 @@ import { FlareIcon } from './Icons';
 interface LogoProps {
   className?: string;
   size?: 'sm' | 'md' | 'lg';
+  darkBg?: boolean;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
+export const Logo: React.FC<LogoProps> = ({ className, size = 'md', darkBg = false }) => {
   const sizes = {
     sm: {
       title: 'text-xl md:text-2xl',
@@ -44,18 +45,31 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 'md' }) => {
       </h1>
       <div className={cn("flex flex-col items-center mt-1", current.gap)}>
         <span className={cn(
-          "font-technical tracking-[0.4em] opacity-80 uppercase whitespace-nowrap text-on-surface",
+          "font-technical tracking-[0.4em] opacity-80 uppercase whitespace-nowrap",
+          darkBg ? "text-white" : "text-on-surface",
           size === 'sm' ? "hidden md:block" : "block",
           current.subtitle
         )}>
-          Driven Lives. New Zone.
+          STREET FASHION
         </span>
         
         {/* Decorative Divider matching the logo image */}
         <div className={cn("items-center gap-2 mt-1", size === 'sm' ? "hidden md:flex" : "flex")}>
-          <div className={cn("h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent", current.divider)} />
+          <div className={cn(
+            "h-[1px]", 
+            darkBg 
+              ? "bg-gradient-to-r from-transparent via-white/30 to-transparent" 
+              : "bg-gradient-to-r from-transparent via-primary/30 to-transparent", 
+            current.divider
+          )} />
           <FlareIcon className={cn("text-brand-red opacity-80", current.icon)} />
-          <div className={cn("h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent", current.divider)} />
+          <div className={cn(
+            "h-[1px]", 
+            darkBg 
+              ? "bg-gradient-to-r from-transparent via-white/30 to-transparent" 
+              : "bg-gradient-to-r from-transparent via-primary/30 to-transparent", 
+            current.divider
+          )} />
         </div>
       </div>
     </div>

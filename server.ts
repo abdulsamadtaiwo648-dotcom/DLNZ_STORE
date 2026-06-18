@@ -326,6 +326,99 @@ async function startServer() {
         console.log(`[DLNZ MAILBOX PREVIEW]: ${previewUrl}`);
       }
 
+      // Secure dispatch of admin alert notification email (safeguarded)
+      try {
+        const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || 'admin@drivenlivesnewzone.com';
+        const adminMailOptions = {
+          from: process.env.SMTP_FROM || `"DLNZ System Mainframe" <noreply@drivenlivesnewzone.com>`,
+          to: adminEmail,
+          subject: `[ADMIN ALERT] New DLNZ Order Received: #${orderId}`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+            <body style="background-color: #050505; color: #f5f5f5; margin: 0; padding: 24px; font-family: monospace;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #0b0b0b; border: 1px solid #1a1a1a; padding: 32px 24px; box-sizing: border-box;">
+                <div style="text-align: center; border-bottom: 2px solid #ff3333; padding-bottom: 16px; margin-bottom: 24px;">
+                  <h1 style="color: #ff3333; font-size: 18px; font-weight: bold; letter-spacing: 0.3em; margin: 0; text-transform: uppercase;">[ ADMIN DISPATCH REGISTRY ]</h1>
+                  <p style="color: #888888; font-size: 8px; letter-spacing: 0.2em; margin: 8px 0 0 0;">NEW PURCHASE ALERT - INVENTORY ALLOCATION REQUIRED</p>
+                </div>
+                
+                <p style="color: #cccccc; font-size: 12px; line-height: 1.6; font-family: sans-serif;">
+                  An order has been finalized and verified by the customer. Please prepare the items for freight dispatch immediately.
+                </p>
+
+                <div style="background-color: #0f0f0f; border: 1px solid #1f1f1f; padding: 16px; margin-bottom: 24px;">
+                  <h3 style="color: #ff3333; font-size: 11px; margin-top: 0; border-bottom: 1px solid #222; padding-bottom: 6px; text-transform: uppercase; letter-spacing: 0.1em;">Vessel Log Data</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                    <tr>
+                      <td style="padding: 4px 0; color: #555555; text-transform: uppercase; width: 140px;">Order Reference:</td>
+                      <td style="padding: 4px 0; color: #ffffff; font-weight: bold;">#${orderId}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #555555; text-transform: uppercase;">Customer Name:</td>
+                      <td style="padding: 4px 0; color: #ffffff;">${customerName}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #555555; text-transform: uppercase;">Customer Email:</td>
+                      <td style="padding: 4px 0; color: #ffffff;">${customerEmail}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #555555; text-transform: uppercase;">Phone Number:</td>
+                      <td style="padding: 4px 0; color: #ffffff;">${phone || 'None provided'}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 4px 0; color: #555555; text-transform: uppercase;">Total Charges:</td>
+                      <td style="padding: 4px 0; color: #ff3333; font-weight: bold;">₦${amount.toLocaleString()}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div style="border: 1px dashed #222222; padding: 14px; background-color: #070707; margin-bottom: 24px;">
+                  <h4 style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #ff3333; margin-top: 0; margin-bottom: 6px; letter-spacing: 0.1em;">DELIVERY ADDRESS</h4>
+                  <p style="color: #888888; font-size: 12px; margin: 0; text-transform: uppercase; letter-spacing: -0.01em;">
+                    ${shippingAddress}
+                  </p>
+                </div>
+
+                <div style="margin-bottom: 32px;">
+                  <h3 style="font-size: 11px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.2em; color: #ffffff; border-bottom: 1px solid #1a1a1a; padding-bottom: 8px; margin-bottom: 12px;">ORDER CARGO DETAILS</h3>
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                      <tr style="border-bottom: 1px solid #222222;">
+                        <th style="padding: 8px 4px; text-align: left; font-size: 9px; color: #555555; text-transform: uppercase; letter-spacing: 0.1em;">Description</th>
+                        <th style="padding: 8px 4px; text-align: center; font-size: 9px; color: #555555; text-transform: uppercase; letter-spacing: 0.1em;">Size</th>
+                        <th style="padding: 8px 4px; text-align: center; font-size: 9px; color: #555555; text-transform: uppercase; letter-spacing: 0.1em;">Qty</th>
+                        <th style="padding: 8px 4px; text-align: right; font-size: 9px; color: #555555; text-transform: uppercase; letter-spacing: 0.1em;">Price</th>
+                        <th style="padding: 8px 4px; text-align: right; font-size: 9px; color: #555555; text-transform: uppercase; letter-spacing: 0.1em;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${itemsHtml}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style="text-align: center; margin-bottom: 16px;">
+                  <a href="${process.env.APP_URL || 'https://ai.studio/build'}/admin/orders" style="display: inline-block; background-color: #ff3333; color: #ffffff; text-transform: uppercase; font-size: 10px; font-weight: bold; letter-spacing: 0.15em; text-decoration: none; padding: 14px 28px; border: 1px solid #ff3333; transition: background-color 0.2s;">
+                    MANAGE ORDERS IN DASHBOARD
+                  </a>
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+        };
+
+        const adminInfo = await transporter.sendMail(adminMailOptions);
+        console.log('Admin notification email successfully dispatched to admin:', adminEmail, 'ID:', adminInfo.messageId);
+        const adminPreviewUrl = nodemailer.getTestMessageUrl(adminInfo);
+        if (adminPreviewUrl) {
+          console.log(`[DLNZ ADMIN MAILBOX PREVIEW]: ${adminPreviewUrl}`);
+        }
+      } catch (adminMailError) {
+        console.warn('Unable to dispatch copy of order email to admin:', adminMailError);
+      }
+
       return res.json({
         status: 'success',
         orderId,
@@ -476,6 +569,111 @@ async function startServer() {
       res.json({ status: 'success', message: 'Database seeded successfully on backend.' });
     } catch (err: any) {
       console.error('Error seeding database:', err);
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  // Support Chatbot Endpoint with Gemini & fallback responses
+  app.post('/api/support/chat', async (req, res) => {
+    try {
+      const { message, history } = req.body;
+      if (!message) {
+        return res.status(400).json({ error: 'Message payload is required' });
+      }
+
+      console.log('Processing Support Chat Message:', message);
+
+      // Fetch orders lookup registry if support needs to track a client order
+      let ordersList: any[] = [];
+      try {
+        ordersList = await dbGetDocs('orders');
+      } catch (err) {
+        console.warn('Could not load orders for contextual chat grounding:', err);
+      }
+
+      const ordersSummary = ordersList.map(o => `- Order #${o.id}: Status [${o.status.toUpperCase()}], Customer: ${o.customerName}, Tracking: ${o.tracking || 'N/A'}`).join('\n');
+
+      const systemInstruction = `
+        You are the automated System Support Agent for DRIVEN LIVES NEW ZONE (DLNZ).
+        DLNZ is an ultra-premium streetwear brand and registry representing curated footwear, structural clothes, accessories, and bags.
+        Your tone is professional, helpful, polite, and highly clear. Speak clearly and assist customers with their questions.
+        
+        Guidelines:
+        1. Assist customers with checkout steps, payment protocols, shipping, return policies, or tracking their packages.
+        2. DO NOT disclose detailed inventory raw databases or product lists. If a customer is asking about what products are available or if something is in stock, politely guide them to check the live inventory collections pages directly on the website setup.
+        3. If a customer asks about active hours, standard live staff work hours are Monday - Friday, 9:00 AM - 6:00 PM. Outside these hours, assistance is automated.
+        4. If a customer provides an Order ID, you can check order status or registry logs of DLNZ. Here are some of the active/recent orders:
+        ${ordersSummary || 'No recent orders in log.'}
+        If matched, give them their direct order status update objectively.
+      `;
+
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        try {
+          const { GoogleGenAI } = await import('@google/genai');
+          const aiObj = new GoogleGenAI({
+            apiKey: apiKey,
+            httpOptions: {
+              headers: {
+                'User-Agent': 'aistudio-build',
+              }
+            }
+          });
+
+          const formattedContents = [];
+          if (Array.isArray(history)) {
+            history.forEach((h: any) => {
+              formattedContents.push({
+                role: h.role === 'user' ? 'user' : 'model',
+                parts: [{ text: h.text }]
+              });
+            });
+          }
+          formattedContents.push({
+            role: 'user',
+            parts: [{ text: message }]
+          });
+
+          const response = await aiObj.models.generateContent({
+            model: "gemini-3.5-flash",
+            contents: formattedContents,
+            config: {
+              systemInstruction,
+              temperature: 0.7,
+            },
+          });
+
+          if (response.text) {
+            return res.json({ reply: response.text });
+          }
+        } catch (geminiError: any) {
+          console.error('Gemini API call failed, running custom fallback:', geminiError);
+        }
+      }
+
+      // Safe Fallback engine when key is missing or call fails
+      let reply = "DLNZ SYSTEM DIAGNOSTICS ENCOUNTERED. SOURCING LOCAL RESPONDERS.";
+      const cleanMsg = message.toLowerCase();
+
+      if (cleanMsg.includes('track') || cleanMsg.includes('order') || cleanMsg.includes('status')) {
+        const foundOrder = ordersList.find(o => cleanMsg.includes(o.id.toLowerCase()) || (o.tracking && cleanMsg.includes(o.tracking.toLowerCase())));
+        if (foundOrder) {
+          reply = `[ ORDER DECODED ]\nOrder ID: #${foundOrder.id}\nCustomer: ${foundOrder.customerName}\nStatus: ${foundOrder.status.toUpperCase()}\nTracking Ref: ${foundOrder.tracking || 'PENDING DISPATCH'}\nDelivery Coordinate: ${foundOrder.shippingAddress}`;
+        } else {
+          reply = "Please supply your exact Order ID (e.g., matching your purchase confirmation) to let our operators check the delivery status registry.";
+        }
+      } else if (cleanMsg.includes('shipping') || cleanMsg.includes('rate') || cleanMsg.includes('delivery')) {
+        reply = "DLNZ DELIVERY TIMES:\n- Standard Delivery: 4-7 business days across Nigeria.\n- Express Priority: 1-2 business days (Lagos / Abuja regions).\n- Tracking updates are registered immediately upon parcel dispatch.";
+      } else if (cleanMsg.includes('products') || cleanMsg.includes('inventory') || cleanMsg.includes('buy') || cleanMsg.includes('stock') || cleanMsg.includes('clothes') || cleanMsg.includes('wear')) {
+        reply = "Please visit our live Collections catalog on the website navigation header. This page is updated in real-time with available sizes, detailed dimensions, and live stock allocation ready for instant reservation.";
+      } else {
+        reply = "Hello! Welcome to DLNZ Customer Support. How can we help you regarding your shipping options, tracking coordinates, or payment setups today?";
+      }
+
+      return res.json({ reply });
+
+    } catch (err: any) {
+      console.error('Customer Support Chatbot route crashed:', err);
       res.status(500).json({ error: err.message || String(err) });
     }
   });
